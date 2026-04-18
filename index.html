@@ -500,21 +500,22 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════ CASE MASTER ══════════════════════════════════ -->
-  <div class="section-header">
-  <div>
-    <div class="section-title">Case Master Register</div>
-    <div class="section-sub">All cases with current status</div>
-  </div>
-  <div class="btn-row">
-    <!-- Naya Import Button -->
-    <label class="btn btn-primary btn-sm" style="cursor:pointer; background: #673ab7; border:none;">
-      📥 Import CSV (Bulk)
-      <input type="file" id="import-csv-input" accept=".csv" style="display:none;" onchange="importCasesCSV(event)">
-    </label>
-    <button class="btn btn-outline btn-sm" onclick="exportCaseMaster()">⬇ Export CSV</button>
-  </div>
-</div>
+<!-- ══════════════════════════════════ CASE MASTER ══════════════════════════════════ -->
+  <div id="tab-case-master" class="section"> <!-- YE LINE MISSING THI -->
+    <div class="section-header">
+      <div>
+        <div class="section-title">Case Master Register</div>
+        <div class="section-sub">All cases with current status</div>
+      </div>
+      <div class="btn-row">
+        <label class="btn btn-primary btn-sm" style="cursor:pointer; background: #673ab7; border:none;">
+          📥 IMPORT CSV (BULK)
+          <input type="file" id="import-csv-input" accept=".csv" style="display:none;" onchange="importCasesCSV(event)">
+        </label>
+        <button class="btn btn-outline btn-sm" onclick="exportCaseMaster()">⬇ Export CSV</button>
+      </div>
+    </div>
+    
     <div class="search-bar">
       <input id="cm-search" placeholder="🔍 Search by Case ID, Client Name, Status..." oninput="renderCaseMaster()" style="max-width:340px"/>
       <select id="cm-filter-status" onchange="renderCaseMaster()" style="width:140px">
@@ -526,20 +527,24 @@
         <option>High</option><option>Medium</option><option>Low</option>
       </select>
     </div>
+    
     <div class="card" style="padding:0">
       <div class="table-wrap">
         <table id="cm-table">
-          <thead><tr>
-            <th>Case ID</th><th>Created</th><th>Client</th><th>Company</th>
-            <th>Services</th><th>Amount Paid</th><th>Priority</th><th>Status</th>
-            <th>Team Lead</th><th>Last Update</th><th>Next Action</th><th>Actions</th>
-          </tr></thead>
-          <tbody id="cm-body"><tr><td colspan="12"><div class="empty-state"><span class="emoji">📂</span>No cases found. Create one from New Case tab.</div></td></tr></tbody>
+          <thead>
+            <tr>
+              <th>Case ID</th><th>Created</th><th>Client</th><th>Company</th>
+              <th>Services</th><th>Amount Paid</th><th>Priority</th><th>Status</th>
+              <th>Initiated By</th><th>Last Update</th><th>Next Action</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cm-body">
+            <tr><td colspan="12"><div class="empty-state">No cases found.</div></td></tr>
+          </tbody>
         </table>
       </div>
     </div>
-  </div>
-
+  </div> <!-- TAB CLOSING -->
   <!-- ══════════════════════════════════ HISTORY UPLOAD ══════════════════════════════════ -->
   <div id="tab-history" class="section">
     <div class="section-header">
@@ -1019,97 +1024,6 @@ function refreshDropdowns() {
   });
 }
 
-// async function submitNewCase() {
-//   const get = id => {
-//     const el = document.getElementById(id);
-//     return el ? el.value.trim() : "";
-//   };
-  
-//   // Validation
-//   if (!get("nc-company") || !get("nc-title") || !get("nc-client") || !get("nc-summary")) {
-//     toast("Required fields missing! (Company, Title, Client, Summary)", "error");
-//     return;
-//   }
-
-//   try {
-//     // ─── DYNAMIC SERVICES LOGIC START (ADDED) ───
-//     const serviceRows = document.querySelectorAll(".service-row");
-//     let servicesData = [];
-//     serviceRows.forEach(row => {
-//       const name = row.querySelector(".s-name") ? row.querySelector(".s-name").value : "";
-//       const status = row.querySelector(".s-status") ? row.querySelector(".s-status").value : "";
-//       const amt = row.querySelector(".s-amt") ? row.querySelector(".s-amt").value : "0";
-//       if (name) {
-//         servicesData.push(`${name} [₹${amt}] (${status})`);
-//       }
-//     });
-//     const capturedServices = servicesData.join(", ");
-//     // ─── DYNAMIC SERVICES LOGIC END ───
-
-//     const caseId = generateCaseId();
-//     const createdDate = nowIST();
-
-//     const row = {
-//       caseId, 
-//       createdDate,
-//       companyName: get("nc-company"),
-//       caseTitle: get("nc-title"),
-//       priority: get("nc-priority"),
-//       sourceOfComplaint: get("nc-business"),
-//       typeOfComplaint: get("nc-complaint-type"),
-//       servicesSold: capturedServices || get("nc-services"), // Use dynamic data if available
-//       clientName: get("nc-client"),
-//       clientMobile: get("nc-mobile"),
-//       clientEmail: get("nc-email"),
-//       state: get("nc-state"),
-//       totalAmtPaid: get("nc-amtpaid") || "0",
-//       mouSigned: get("nc-mou"),
-//       totalMouValue: get("nc-mouval") || "0",
-//       amtInDispute: get("nc-dispute") || "0",
-//       smRisk: get("nc-smrisk"),
-//       complaint: get("nc-complaint"),
-//       policeThreat: get("nc-police"),
-//       caseSummary: get("nc-summary"),
-//       clientAllegation: get("nc-allegation"),
-//       proofCallRec: get("nc-call-rec"),
-//       proofWaChat: get("nc-wa-chat"),
-//       proofVideoCall: get("nc-v-call"),
-//       proofFundingEmail: get("nc-funding-email"),
-//       initiatedBy: get("nc-lead"),
-//       accountable: get("nc-negotiator"),
-//       legalOfficer: get("nc-legal"),
-//       accounts: get("nc-accounts"),
-//       currentStatus: "Open",
-//       lastUpdateDate: createdDate
-//     };
-
-//     if (!DB.cases) DB.cases = [];
-//     DB.cases.push(row);
-
-//     // Safe Call to Timeline
-//     if (typeof addTimelineEntry === "function") {
-//       addTimelineEntry(caseId, createdDate, "CASE_CREATION", "Case Created", "New Case Registered");
-//     }
-    
-//     // UI Updates
-//     updateDashboard();
-//     if (typeof renderCaseMaster === "function") renderCaseMaster();
-//     refreshDropdowns();
-//     refreshNavCount(); // Ab ye crash nahi hoga
-
-//     // Redirect
-//     const tab = document.querySelector('[data-tab="case-master"]');
-//     if (tab) tab.click();
-
-//     toast("Case Created! Syncing...", "success");
-//     clearNewCaseForm();
-//     saveDB(); // Cloud sync
-
-//   } catch (error) {
-//     console.error("Submission Error Details:", error);
-//     toast("Error: " + error.message, "error");
-//   }
-// }
 
 async function submitNewCase() {
   const get = id => {
@@ -1249,7 +1163,18 @@ function updateDashboard() {
 }
 
 function clearNewCaseForm() {
+  // Saare basic inputs clear karein
   document.querySelectorAll("#tab-new-case input, #tab-new-case textarea").forEach(i => i.value = "");
+  
+  // Saare dropdowns reset karein
+  document.querySelectorAll("#tab-new-case select").forEach(s => s.selectedIndex = 0);
+  
+  // Dynamic Services reset karein
+  toggleServiceMode(); 
+  
+  // Files reset karein
+  if(document.getElementById("fir-file-chip")) document.getElementById("fir-file-chip").innerHTML = "";
+  document.getElementById("nc-fir-file-data").value = "";
 }
 
 // Case detail modal logic
@@ -1305,23 +1230,7 @@ function getFilePreviewIcon(link) {
   return `<a href="${link}" target="_blank" title="View Document" style="text-decoration:none; font-size:18px;">👁️</a>`;
 }
 
-// Example: renderHistoryTable ko isse update karein
-// function renderHistoryTable() {
-//   const body = document.getElementById("hist-body");
-//   if (!body || !DB.history.length) return;
-  
-//   body.innerHTML = DB.history.slice().reverse().map(h => `
-//     <tr>
-//       <td>${h.histId}</td>
-//       <td>${h.caseId}</td>
-//       <td>${h.eventDate}</td>
-//       <td>${h.histType}</td>
-//       <td>${h.summary}</td>
-//       <td>${getFilePreviewIcon(h.fileLink)}</td> <!-- VIEW ICON ADDED -->
-//       <td>${h.enteredBy || "-"}</td>
-//     </tr>
-//   `).join("");
-// }
+
 
 // ── Badge Helpers (Missing Functions) ──
 function statusBadge(s) {
@@ -2030,7 +1939,7 @@ async function generateCaseStudy() {
     <!-- IV. TEAM ASSIGNMENT -->
     <table class="cs-table">
       <tr><th colspan="2">TEAM ASSIGNMENT</th></tr>
-      <tr><td class="cs-label">Team Lead</td><td>${c.teamLead || "-"}</td></tr>
+      <tr><td class="cs-label">Initiated By</td><td>${c.initiatedBy || "-"}</td></tr>
       <tr><td class="cs-label">Negotiator</td><td>${c.negotiator || "-"}</td></tr>
       <tr><td class="cs-label">Legal Officer</td><td>${c.legalOfficer || "-"}</td></tr>
       <tr><td class="cs-label">Accounts Officer</td><td>${c.accountsOfficer || "-"}</td></tr>
