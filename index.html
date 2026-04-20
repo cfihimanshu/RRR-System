@@ -767,19 +767,25 @@
     </div>
   </div>
 
-  <!-- <div id="tab-internal-search" class="section">
-    <div class="section-header">
-        <div>
-            <div class="section-title">Internal Master Data Search</div>
-            <div class="section-sub">Search anything from the uploaded sample data</div>
-        </div>
-        <div class="btn-row">
-            <label class="btn btn-primary btn-sm" style="cursor:pointer; background:#4caf50;">
-                📥 Upload Sample CSV
-                <input type="file" accept=".csv" style="display:none;" onchange="importSampleCSV(event)">
-            </label>
-        </div>
-    </div> -->
+  
+
+
+</div><!-- /main -->
+
+<!-- Case detail modal -->
+<div class="modal-bg" id="case-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-case-id-title">Case Details</span>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast"></div>
+
 
     <div id="tab-internal-search" class="section" style="max-height: 400px; overflow-y: auto;">
 
@@ -797,7 +803,7 @@
         </div>
     </div>
 
-</div>
+
     <!-- Search Bar -->
     <div class="card">
         <input type="text" id="sample-search-input" placeholder="Type Company Name, Contact, BDE or Email to search..." 
@@ -832,22 +838,7 @@
         </div>
     </div>
 </div>
-
-</div><!-- /main -->
-
-<!-- Case detail modal -->
-<div class="modal-bg" id="case-modal">
-  <div class="modal">
-    <div class="modal-title">
-      <span id="modal-case-id-title">Case Details</span>
-      <button class="close-btn" onclick="closeModal()">✕</button>
-    </div>
-    <div id="modal-body"></div>
-  </div>
 </div>
-
-<!-- Toast container -->
-<div id="toast"></div>
 
 <script src="script.js"></script>
 </body>
