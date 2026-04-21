@@ -3,11 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<!-- PDF Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <title>RRR Engine – Live Case Management System</title>
 <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
 
@@ -19,9 +17,8 @@
   </div>
   <div class="navbar-right">
     <span class="clock" id="clock">--:--:--</span>
-    <!-- Navbar ke andar kahin ye span hona chahiye -->
-<span id="navbar-case-count">0 cases</span>
-<button class="btn btn-danger btn-sm" onclick="logout()">🚪 Logout</button>
+    <span id="navbar-case-count">0 cases</span>
+    <button class="btn btn-danger btn-sm" onclick="logout()">🚪 Logout</button>
   </div>
 </div>
 
@@ -42,733 +39,715 @@
 
 <div class="main">
 
-  <!-- ══════════════════════════════════ DASHBOARD ══════════════════════════════════ -->
-  <div id="tab-dashboard" class="section active">
-    <div class="section-header">
-      <div>
-        <div class="section-title">Dashboard</div>
-        <div class="section-sub" id="dash-last-check">Last checked: never</div>
-      </div>
-      <button class="btn btn-primary" onclick="runDailyChecker()">▶ Run Daily Checker</button>
+<!-- ══════════════ 1. DASHBOARD ══════════════ -->
+<div id="tab-dashboard" class="section active">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Dashboard</div>
+      <div class="section-sub" id="dash-last-check">Last checked: never</div>
     </div>
+    <button class="btn btn-primary" onclick="runDailyChecker()">▶ Run Daily Checker</button>
+  </div>
 
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat blue"><div class="val" id="stat-total">0</div><div class="lbl">Total Cases</div></div>
-      <div class="stat blue"><div class="val" id="stat-open">0</div><div class="lbl">Open</div></div>
-      <div class="stat green"><div class="val" id="stat-settled">0</div><div class="lbl">Settled / Closed</div></div>
-      <div class="stat red"><div class="val" id="stat-overdue">0</div><div class="lbl">Overdue Actions</div></div>
-      <div class="stat orange"><div class="val" id="stat-duesoon">0</div><div class="lbl">Due in 2 Days</div></div>
-      <div class="stat blue"><div class="val" id="stat-high">0</div><div class="lbl">High Priority</div></div>
-    </div>
+  <div class="stats-grid">
+    <div class="stat blue"><div class="val" id="stat-total">0</div><div class="lbl">Total Cases</div></div>
+    <div class="stat blue"><div class="val" id="stat-open">0</div><div class="lbl">Open</div></div>
+    <div class="stat green"><div class="val" id="stat-settled">0</div><div class="lbl">Settled / Closed</div></div>
+    <div class="stat red"><div class="val" id="stat-overdue">0</div><div class="lbl">Overdue Actions</div></div>
+    <div class="stat orange"><div class="val" id="stat-duesoon">0</div><div class="lbl">Due in 2 Days</div></div>
+    <div class="stat blue"><div class="val" id="stat-high">0</div><div class="lbl">High Priority</div></div>
+  </div>
 
-    <div class="row">
-      <div class="col">
-        <div class="card">
-          <div class="card-title"><span class="icon" style="background:#fce8e6">🔴</span> Overdue Actions</div>
-          <div id="dash-overdue"><div class="empty-state"><span class="emoji">✅</span>No overdue actions</div></div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card">
-          <div class="card-title"><span class="icon" style="background:#fef7e0">🟡</span> Due Within 2 Days</div>
-          <div id="dash-duesoon"><div class="empty-state"><span class="emoji">✅</span>Nothing due soon</div></div>
-        </div>
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#fce8e6">🔴</span> Overdue Actions</div>
+        <div id="dash-overdue"><div class="empty-state"><span class="emoji">✅</span>No overdue actions</div></div>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-title"><span class="icon" style="background:#e8f0fe">📊</span> Recent Cases</div>
-      <div class="table-wrap">
-        <table id="dash-recent-table">
-          <thead><tr><th>Case ID</th><th>Client</th><th>Priority</th><th>Status</th><th>Last Update</th><th>Next Action</th></tr></thead>
-          <tbody id="dash-recent-body"><tr><td colspan="6" class="empty-state">No cases yet</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card" id="refund-request-card">
-      <div class="card-title"><span class="icon" style="background:#fef7e0">Rs</span> Raise Refund Request</div>
-      <div class="form-grid cols3">
-        <div class="field">
-          <label class="required">Case ID</label>
-          <select id="rr-caseid"><option value="">-- Select Case --</option></select>
-        </div>
-        <div class="field">
-          <label class="required">Refund Amount (Rs)</label>
-          <input id="rr-amount" type="number" min="1" placeholder="0" />
-        </div>
-        <div class="field">
-          <label>Requested By</label>
-          <input id="rr-requestedby" placeholder="Your name" />
-        </div>
-        <div class="field span3">
-          <label class="required">Refund Summary / Reason</label>
-          <textarea id="rr-summary" placeholder="Write why the refund is being requested, client demand, and internal recommendation."></textarea>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="submitRefundRequest()">Send to Admin Approval</button>
-      </div>
-    </div>
-
-    <div class="card" id="refund-dashboard-card">
-      <div class="card-title"><span class="icon" style="background:#e6f4ea">₹</span> Refund Request Status</div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Case ID</th><th>Amount / Notes</th><th>Requested By</th><th>Status</th><th>Admin Update</th></tr></thead>
-          <tbody id="refund-dashboard-body"><tr><td colspan="5"><div class="empty-state">No refund requests yet.</div></td></tr></tbody>
-        </table>
+    <div class="col">
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#fef7e0">🟡</span> Due Within 2 Days</div>
+        <div id="dash-duesoon"><div class="empty-state"><span class="emoji">✅</span>Nothing due soon</div></div>
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════ NEW CASE FORM ══════════════════════════════════ -->
-  <div id="tab-new-case" class="section">
-    <div class="section-header">
-      <div><div class="section-title">New Case Creation</div></div>
-    </div>
-    <!-- <div class="alert alert-info">Auto-generated Case ID format: <strong>CASE-YYYY-NNNN</strong> &nbsp;|&nbsp; All starred fields are required.</div> -->
-
-    <div class="card">
-      <div class="card-title"><span class="icon" style="background:#e8f0fe">🏢</span> Company & Case Info</div>
-      <div class="form-grid">
-        <div class="field"><label class="required">Company Name</label><input id="nc-company" placeholder="e.g. ABC Solutions Pvt Ltd" oninput="autoGenerateTitle()"/></div>
-        <div class="field"><label class="required">Case Title</label><input id="nc-title" readonly placeholder="Auto-generated title" /></div>
-        <div class="field"><label class="required">Priority</label>
-          <select id="nc-priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
-        </div>
-         <div class="field"><label>Source of Complaint</label>
-      <select id="nc-business">
-        <option value="">-- Select --</option>
-        <option>Email</option><option>Office Visit</option><option>Call</option><option>Social Media</option>
-      </select>
-    </div>
-     <!-- New: Type of Complaint -->
-    <div class="field"><label>Type of Complaint</label>
-      <select id="nc-complaint-type" onchange="autoGenerateTitle()">
-        <option value="">-- Select --</option>
-        <option>Legal Notice</option><option>Cyber Complaint</option><option>Consumer Complaint</option>
-        <option>FIR</option><option>Litigation</option><option>Escalation</option><option>General Query</option>
-      </select>
-      <!-- ── Conditional Complaint Fields ── -->
-<div id="conditional-fields" style="grid-column: span 3; margin-top: 10px;">
-  
-  <!-- Cyber Complaint Section -->
-  <div id="cyber-extra" style="display:none; background:#e8f0fe; padding:15px; border-radius:8px;">
-    <label>Acknowledgment Numbers (Cyber)</label>
-    <div id="ack-container">
-      <div style="display:flex; gap:10px; margin-bottom:5px;">
-        <input class="ack-input" placeholder="Enter Acknowledgment Number" style="flex:1;">
-        <button type="button" class="btn btn-primary btn-sm" onclick="addAckField()">➕</button>
-      </div>
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:#e8f0fe">📊</span> Recent Cases</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Case ID</th><th>Client</th><th>Priority</th><th>Status</th><th>Last Update</th><th>Next Action</th></tr></thead>
+        <tbody id="dash-recent-body"><tr><td colspan="6" class="empty-state">No cases yet</td></tr></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- FIR Section -->
-  <div id="fir-extra" style="display:none; background:#fce8e6; padding:15px; border-radius:8px;">
-    <div class="form-grid">
-      <div class="field"><label>FIR Number</label><input id="nc-fir-num" placeholder="Enter FIR No."></div>
+  <div class="card" id="refund-request-card">
+    <div class="card-title"><span class="icon" style="background:#fef7e0">₹</span> Raise Refund Request</div>
+    <div class="form-grid cols3">
       <div class="field">
-        <label>Upload FIR Copy</label>
-        <div class="upload-zone" id="fir-upload-zone" ondragover="handleDragOver(event,'fir-upload-zone')" ondrop="handleDrop(event,'fir-upload-zone','nc-fir-file-data','nc-fir-file-chip')">
-           <input type="file" onchange="handleFileSelect(event,'fir-upload-zone','nc-fir-file-data','nc-fir-file-chip')">
-           <div class="upload-label">Click to upload FIR</div>
-        </div>
-        <div id="nc-fir-file-chip"></div>
-        <input type="hidden" id="nc-fir-file-data">
+        <label class="required">Case ID</label>
+        <select id="rr-caseid"><option value="">-- Select Case --</option></select>
       </div>
+      <div class="field">
+        <label class="required">Refund Amount (₹)</label>
+        <input id="rr-amount" type="number" min="1" placeholder="0" />
+      </div>
+      <div class="field">
+        <label>Requested By</label>
+        <input id="rr-requestedby" placeholder="Your name" />
+      </div>
+      <div class="field span3">
+        <label class="required">Refund Summary / Reason</label>
+        <textarea id="rr-summary" placeholder="Write why the refund is being requested..."></textarea>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="submitRefundRequest()">Send Refund Request</button>
     </div>
   </div>
 
-  <!-- Consumer Complaint Section -->
-  <div id="consumer-extra" style="display:none; background:#fef7e0; padding:15px; border-radius:8px;">
-    <div class="field"><label>Grievance Number</label><input id="nc-grievance-num" placeholder="Enter Grievance No."></div>
+  <div class="card" id="refund-dashboard-card">
+    <div class="card-title"><span class="icon" style="background:#e6f4ea">₹</span> Refund Request Status</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Case ID</th><th>Amount / Notes</th><th>Requested By</th><th>Status</th><th>Admin Update</th></tr></thead>
+        <tbody id="refund-dashboard-body"><tr><td colspan="5"><div class="empty-state">No refund requests yet.</div></td></tr></tbody>
+      </table>
+    </div>
   </div>
-
 </div>
-    </div>
-        <!-- <div class="field span2"><label>Services Sold</label><input id="nc-services" placeholder="e.g. Digital Marketing, SEO, Website" /></div> -->
-         <!-- ── Services Configuration Section ── -->
-
-<style>
-  .service-row {
-    background: #f8f9fa;
-    border: 1px solid var(--gray-border);
-    padding: 15px;
-    border-radius: var(--radius);
-    margin-bottom: 10px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    position: relative;
-  }
-  .remove-service {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: var(--red);
-    color: white;
-    border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    box-shadow: var(--shadow);
-  }
-</style>
+<!-- ══════════════ /DASHBOARD ══════════════ -->
 
 
+<!-- ══════════════ 2. NEW CASE ══════════════ -->
+<div id="tab-new-case" class="section">
+  <div class="section-header">
+    <div><div class="section-title">New Case Creation</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:#e8f0fe">🏢</span> Company & Case Info</div>
+    <div class="form-grid">
+      <div class="field"><label class="required">Company Name</label><input id="nc-company" placeholder="e.g. ABC Solutions Pvt Ltd" oninput="autoGenerateTitle()"/></div>
+      <div class="field"><label class="required">Case Title</label><input id="nc-title" readonly placeholder="Auto-generated title" /></div>
+      <div class="field"><label class="required">Priority</label>
+        <select id="nc-priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
       </div>
-      <div class="card" style="border-top: 4px solid var(--orange);">
-  <div class="card-title"><span class="icon" style="background:var(--orange-light)">🛠️</span> Services Sold Configuration</div>
-  
-  <div class="field" style="margin-bottom: 15px; max-width: 300px;">
-    <label>Service Mode</label>
-    <select id="nc-service-mode" onchange="toggleServiceMode()">
-      <option value="single">Single Service</option>
-      <option value="multiple">Multiple Services</option>
+      <div class="field"><label>Source of Complaint</label>
+        <select id="nc-business">
+          <option value="">-- Select --</option>
+          <option>Email</option><option>Office Visit</option><option>Call</option><option>Social Media</option>
+        </select>
+      </div>
+      <div class="field"><label>Type of Complaint</label>
+        <select id="nc-complaint-type" onchange="autoGenerateTitle(); handleComplaintTypeChange(this.value)">
+          <option value="">-- Select --</option>
+          <option>Legal Notice</option><option>Cyber Complaint</option><option>Consumer Complaint</option>
+          <option>FIR</option><option>Litigation</option><option>Escalation</option><option>General Query</option><option>Lien</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Conditional Complaint Fields -->
+    <div id="cyber-extra" style="display:none; background:#e8f0fe; padding:15px; border-radius:8px; margin-top:12px;">
+      <label>Acknowledgment Numbers (Cyber)</label>
+      <div id="ack-container">
+        <div style="display:flex; gap:10px; margin-bottom:5px;">
+          <input class="ack-input" placeholder="Enter Acknowledgment Number" style="flex:1;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="addAckField()">➕</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="fir-extra" style="display:none; background:#fce8e6; padding:15px; border-radius:8px; margin-top:12px;">
+      <div class="form-grid">
+        <div class="field"><label>FIR Number</label><input id="nc-fir-num" placeholder="Enter FIR No."></div>
+        <div class="field">
+          <label>Upload FIR Copy</label>
+          <div class="upload-zone" id="fir-upload-zone"
+               ondragover="handleDragOver(event,'fir-upload-zone')"
+               ondrop="handleDrop(event,'fir-upload-zone','nc-fir-file-data','nc-fir-file-chip')">
+            <input type="file" onchange="handleFileSelect(event,'fir-upload-zone','nc-fir-file-data','nc-fir-file-chip')">
+            <div class="upload-label">Click to upload FIR</div>
+          </div>
+          <div id="nc-fir-file-chip"></div>
+          <input type="hidden" id="nc-fir-file-data">
+        </div>
+      </div>
+    </div>
+
+    <div id="consumer-extra" style="display:none; background:#fef7e0; padding:15px; border-radius:8px; margin-top:12px;">
+      <div class="field"><label>Grievance Number</label><input id="nc-grievance-num" placeholder="Enter Grievance No."></div>
+    </div>
+  </div>
+
+  <!-- Services Configuration -->
+  <div class="card" style="border-top: 4px solid var(--orange);">
+    <div class="card-title"><span class="icon" style="background:var(--orange-light)">🛠️</span> Services Sold Configuration</div>
+    <div style="display:flex; gap:15px; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap;">
+      <div class="field" style="width:180px;">
+        <label>Service Mode</label>
+        <select id="nc-service-mode" onchange="toggleServiceMode()">
+          <option value="single">Single Service</option>
+          <option value="multiple">Multiple Services</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1; min-width:350px;">
+        <label>Engagement Note</label>
+        <textarea id="nc-engagement-note" readonly style="background:#f8f9fa; font-size:12px; height:60px; border:1px dashed #aaa; color:#555; line-height:1.4; padding:8px;"></textarea>
+      </div>
+    </div>
+    <hr class="divider" style="margin-bottom:15px;">
+    <div id="services-container"></div>
+    <div id="add-service-btn-wrap" style="display:none; text-align:center; margin-top:10px;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="addServiceRow()" style="border-color:var(--orange); color:#e65100;">➕ Add Another Service</button>
+    </div>
+  </div>
+
+  <!-- Client Information -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:#e6f4ea">👤</span> Client Information</div>
+    <div class="form-grid cols3">
+      <div class="field"><label class="required">Client Name</label><input id="nc-client" placeholder="Full name" /></div>
+      <div class="field"><label class="required">Mobile</label><input id="nc-mobile" placeholder="+91 XXXXX XXXXX" /></div>
+      <div class="field"><label>Email</label><input id="nc-email" type="email" placeholder="client@example.com" /></div>
+      <div class="field"><label>State</label>
+        <select id="nc-state">
+          <option value="">-- Select State --</option>
+          <option>Rajasthan</option><option>Maharashtra</option><option>Delhi</option>
+          <option>Gujarat</option><option>Karnataka</option><option>Tamil Nadu</option>
+          <option>Uttar Pradesh</option><option>West Bengal</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Financial Details -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:#fef7e0">💰</span> Financial Details</div>
+    <div class="form-grid cols3">
+      <div class="field"><label>Total Amount Paid (₹)</label><input id="nc-amtpaid" type="number" placeholder="0" /></div>
+      <div class="field"><label>MOU Signed?</label>
+        <select id="nc-mou"><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Total MOU Value (₹)</label><input id="nc-mouval" type="number" placeholder="0" oninput="updateEngagementNote()" /></div>
+      <div class="field"><label>Amount in Dispute (₹)</label><input id="nc-dispute" type="number" placeholder="0" /></div>
+    </div>
+  </div>
+
+  <!-- Risk Assessment -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:#fce8e6">⚠️</span> Risk & Threat Assessment</div>
+    <div class="form-grid cols3">
+      <div class="field"><label>Social Media Risk</label>
+        <select id="nc-smrisk"><option>None</option><option>Low</option><option>Medium</option><option>High</option></select>
+      </div>
+      <div class="field"><label>Consumer Complaint Filed?</label>
+        <select id="nc-complaint"><option>No</option><option>Yes – Pending</option><option>Yes – Heard</option></select>
+      </div>
+      <div class="field"><label>Police / Cyber Threat</label>
+        <select id="nc-police"><option>None</option><option>Threatened</option><option>Filed</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case Narrative -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:#e8f0fe">📝</span> Case Narrative</div>
+    <div class="form-grid">
+      <div class="field span2"><label class="required">Case Summary</label><textarea id="nc-summary" placeholder="Brief overview of the case..."></textarea></div>
+      <div class="field"><label>Client's Main Allegation</label><textarea id="nc-allegation" placeholder="What the client claims..."></textarea></div>
+      <div class="field span2">
+        <label style="margin-bottom:10px; display:block;">Proofs</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid var(--gray-border);">
+          <div class="field"><label>Call Recording</label><select id="nc-call-rec"><option>No</option><option>Yes</option></select></div>
+          <div class="field"><label>WhatsApp Chat</label><select id="nc-wa-chat"><option>No</option><option>Yes</option></select></div>
+          <div class="field"><label>Video Call</label><select id="nc-v-call"><option>No</option><option>Yes</option></select></div>
+          <div class="field"><label>Funding Related Email</label><select id="nc-funding-email"><option>No</option><option>Yes</option></select></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Assignment -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:#f3e8ff">👥</span> Team Assignment</div>
+    <div class="form-grid">
+      <div class="field"><label>Initiated By</label>
+        <select id="nc-lead">
+          <option value="">-- Select --</option>
+          <option value="Divya">Divya</option><option value="Meghna">Meghna</option><option value="Deepesh">Deepesh</option>
+        </select>
+      </div>
+      <div class="field"><label>Accountable</label>
+        <select id="nc-negotiator">
+          <option value="">-- Select --</option>
+          <option value="Divya">Divya</option><option value="Meghna">Meghna</option><option value="Deepesh">Deepesh</option>
+        </select>
+      </div>
+      <div class="field"><label>Legal Officer (In Case if any)</label><input id="nc-legal" placeholder="Enter name if any" /></div>
+      <div class="field"><label>Accounts</label>
+        <select id="nc-accounts">
+          <option value="">-- Select --</option>
+          <option value="Khushal">Khushal</option><option value="Vishnu">Vishnu</option><option value="Sakshi">Sakshi</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-success" onclick="submitNewCase()">✅ Create Case & Generate Study</button>
+    <button class="btn btn-outline" onclick="clearNewCaseForm()">🔄 Clear Form</button>
+  </div>
+</div>
+<!-- ══════════════ /NEW CASE ══════════════ -->
+
+
+<!-- ══════════════ 3. CASE MASTER ══════════════ -->
+<div id="tab-case-master" class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Case Master Register</div>
+      <div class="section-sub">All cases with current status</div>
+    </div>
+    <div class="btn-row">
+      <label class="btn btn-primary btn-sm" style="cursor:pointer; background:#673ab7; border:none;">
+        📥 IMPORT CSV (BULK)
+        <input type="file" id="import-csv-input" accept=".csv" style="display:none;" onchange="importCasesCSV(event)">
+      </label>
+      <button class="btn btn-outline btn-sm" onclick="exportCaseMaster()">⬇ Export CSV</button>
+    </div>
+  </div>
+  <div class="search-bar">
+    <input id="cm-search" placeholder="🔍 Search by Case ID, Client Name, Status..." oninput="renderCaseMaster()" style="max-width:340px"/>
+    <select id="cm-filter-status" onchange="renderCaseMaster()" style="width:140px">
+      <option value="">All Status</option>
+      <option>Open</option><option>In Progress</option><option>Settled</option><option>Closed</option>
+    </select>
+    <select id="cm-filter-priority" onchange="renderCaseMaster()" style="width:130px">
+      <option value="">All Priority</option>
+      <option>High</option><option>Medium</option><option>Low</option>
     </select>
   </div>
-
-  <!-- Dynamic Services Container -->
-  <div id="services-container">
-    <!-- Rows will be added here via JS -->
-  </div>
-
-  <div id="add-service-btn-wrap" style="display:none; margin-top: 10px;">
-    <button type="button" class="btn btn-outline btn-sm" onclick="addServiceRow()">➕ Add Another Service</button>
-  </div>
-</div>
+  <div class="card" style="padding:0">
+    <div class="table-wrap">
+      <table id="cm-table">
+        <thead>
+          <tr>
+            <th>Case ID</th><th>Created</th><th>Client</th><th>Company</th>
+            <th>Services</th><th>Amount Paid</th><th>Priority</th><th>Status</th>
+            <th>Initiated By</th><th>Last Update</th><th>Next Action</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="cm-body"><tr><td colspan="12"><div class="empty-state">No cases found.</div></td></tr></tbody>
+      </table>
     </div>
-    
-
-    <div class="card">
-      <div class="card-title"><span class="icon" style="background:#e6f4ea">👤</span> Client Information</div>
-      <div class="form-grid cols3">
-        <div class="field"><label class="required">Client Name</label><input id="nc-client" placeholder="Full name" /></div>
-        <div class="field"><label class="required">Mobile</label><input id="nc-mobile" placeholder="+91 XXXXX XXXXX" /></div>
-        <div class="field"><label>Email</label><input id="nc-email" type="email" placeholder="client@example.com" /></div>
-        <div class="field"><label>State</label>
-          <select id="nc-state">
-            <option value="">-- Select State --</option>
-            <option>Rajasthan</option><option>Maharashtra</option><option>Delhi</option>
-            <option>Gujarat</option><option>Karnataka</option><option>Tamil Nadu</option>
-            <option>Uttar Pradesh</option><option>West Bengal</option><option>Other</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="icon" style="background:#fef7e0">💰</span> Financial Details</div>
-      <div class="form-grid cols3">
-        <div class="field"><label>Total Amount Paid (₹)</label><input id="nc-amtpaid" type="number" placeholder="0" /></div>
-        <div class="field"><label>MOU Signed?</label>
-          <select id="nc-mou"><option>Yes</option><option>No</option></select>
-        </div>
-        <div class="field"><label>Total MOU Value (₹)</label><input id="nc-mouval" type="number" placeholder="0" /></div>
-        <div class="field"><label>Amount in Dispute (₹)</label><input id="nc-dispute" type="number" placeholder="0" /></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="icon" style="background:#fce8e6">⚠️</span> Risk & Threat Assessment</div>
-      <div class="form-grid cols3">
-        <div class="field"><label>Social Media Risk</label>
-          <select id="nc-smrisk"><option>None</option><option>Low</option><option>Medium</option><option>High</option></select>
-        </div>
-        <div class="field"><label>Consumer Complaint Filed?</label>
-          <select id="nc-complaint"><option>No</option><option>Yes – Pending</option><option>Yes – Heard</option></select>
-        </div>
-        <div class="field"><label>Police / Cyber Threat</label>
-          <select id="nc-police"><option>None</option><option>Threatened</option><option>Filed</option></select>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="icon" style="background:#e8f0fe">📝</span> Case Narrative</div>
-      <div class="form-grid">
-        <div class="field span2"><label class="required">Case Summary</label><textarea id="nc-summary" placeholder="Brief overview of the case..."></textarea></div>
-        <div class="field"><label>Client's Main Allegation</label><textarea id="nc-allegation" placeholder="What the client claims..."></textarea></div>
-        <div class="field span2">
-      <label style="margin-bottom:10px; display:block; color:var(black);"> Proofs</label>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid var(--gray-border);">
-        <div class="field"><label>Call Recording</label>
-          <select id="nc-call-rec"><option>No</option><option>Yes</option></select>
-        </div>
-        <div class="field"><label>WhatsApp Chat</label>
-          <select id="nc-wa-chat"><option>No</option><option>Yes</option></select>
-        </div>
-        <div class="field"><label>Video Call</label>
-          <select id="nc-v-call"><option>No</option><option>Yes</option></select>
-        </div>
-        <div class="field"><label>Funding Related Email</label>
-          <select id="nc-funding-email"><option>No</option><option>Yes</option></select>
-        </div>
-      </div>
-    </div>
-      </div>
-    </div>
-
-   <!-- ── Team Assignment Updated ── -->
-<div class="card">
-  <div class="card-title"><span class="icon" style="background:#f3e8ff">👥</span> Team Assignment</div>
-  <div class="form-grid">
-    
-    <!-- Initiated By (Previously Team Lead) -->
-    <div class="field">
-      <label>Initiated By</label>
-      <select id="nc-lead">
-        <option value="">-- Select --</option>
-        <option value="Divya">Divya</option>
-        <option value="Meghna">Meghna</option>
-        <option value="Deepesh">Deepesh</option>
-      </select>
-    </div>
-
-    <!-- Accountable (Previously Negotiator) -->
-    <div class="field">
-      <label>Accountable</label>
-      <select id="nc-negotiator">
-        <option value="">-- Select --</option>
-        <option value="Divya">Divya</option>
-        <option value="Meghna">Meghna</option>
-        <option value="Deepesh">Deepesh</option>
-      </select>
-    </div>
-
-    <!-- Legal Officer (Updated Label) -->
-    <div class="field">
-      <label>Legal Officer (In Case if any)</label>
-      <input id="nc-legal" placeholder="Enter name if any" />
-    </div>
-
-    <!-- Accounts (Previously Accounts Officer) -->
-    <div class="field">
-      <label>Accounts</label>
-      <select id="nc-accounts">
-        <option value="">-- Select --</option>
-        <option value="Khushal">Khushal</option>
-        <option value="Vishnu">Vishnu</option>
-        <option value="Sakshi">Sakshi</option>
-      </select>
-    </div>
-
   </div>
 </div>
+<!-- ══════════════ /CASE MASTER ══════════════ -->
 
+
+<!-- ══════════════ 4. HISTORY UPLOAD ══════════════ -->
+<div id="tab-history" class="section">
+  <div class="section-header">
+    <div><div class="section-title">History Upload</div><div class="section-sub">Add pre-case or background history entries</div></div>
+  </div>
+  <div class="row">
+    <div class="col" style="max-width:480px">
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#e8f0fe">📜</span> Add History Entry</div>
+        <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
+          <select id="hu-caseid" onchange="validateCaseId('hu-caseid')"><option value="">-- Select Case --</option></select>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label class="required">Historical Event Date</label><input id="hu-date" type="date"/></div>
+          <div class="field"><label>History Type</label>
+            <select id="hu-type">
+              <option>Complaint</option><option>Meeting</option><option>Payment</option>
+              <option>Legal Notice</option><option>Email</option><option>WhatsApp</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field span2"><label class="required">Event Summary</label><input id="hu-summary" placeholder="One-line summary" /></div>
+          <div class="field span2"><label>Detailed Notes</label><textarea id="hu-notes" placeholder="Additional details..."></textarea></div>
+          <div class="field span2">
+            <label>Attach File (or paste URL)</label>
+            <div class="upload-zone" id="hu-upload-zone"
+                 ondragover="handleDragOver(event,'hu-upload-zone')"
+                 ondragleave="handleDragLeave(event,'hu-upload-zone')"
+                 ondrop="handleDrop(event,'hu-upload-zone','hu-file-data','hu-file-chip')">
+              <input type="file" id="hu-file-input" accept="*/*" onchange="handleFileSelect(event,'hu-upload-zone','hu-file-data','hu-file-chip')" />
+              <div class="upload-icon">📎</div>
+              <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop any file</div>
+            </div>
+            <div id="hu-file-chip"></div>
+            <input id="hu-file" style="margin-top:6px" placeholder="Or paste Google Drive / URL link..." />
+            <input type="hidden" id="hu-file-data" />
+          </div>
+          <div class="field"><label>Source</label><input id="hu-source" placeholder="e.g. Email, WhatsApp" /></div>
+          <div class="field"><label>Entered By</label><input id="hu-enteredby" placeholder="Your name" /></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitHistory()">✅ Add History Entry</button>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="padding:0">
+        <div class="card-title" style="padding:16px 20px 0">History Log</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hist ID</th><th>Case ID</th><th>Event Date</th><th>Type</th><th>Summary</th><th>File</th><th>Entered By</th></tr></thead>
+            <tbody id="hist-body"><tr><td colspan="7"><div class="empty-state"><span class="emoji">📜</span>No history entries yet.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ /HISTORY UPLOAD ══════════════ -->
+
+
+<!-- ══════════════ 5. ACTION LOG ══════════════ -->
+<div id="tab-action-log" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Action Log</div><div class="section-sub">Record every action taken on a case</div></div>
+  </div>
+  <div class="row">
+    <div class="col" style="max-width:480px">
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#fef7e0">⚡</span> Log New Action</div>
+        <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
+          <select id="al-caseid"><option value="">-- Select Case --</option></select>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Action Type</label>
+            <select id="al-type">
+              <option>Negotiation Call</option><option>Legal Notice Sent</option>
+              <option>Meeting</option><option>Email Sent</option><option>WhatsApp</option>
+              <option>Refund Request</option><option>Refund Processed</option><option>Document Filed</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Department</label>
+            <select id="al-dept">
+              <option>Negotiation</option><option>Legal</option><option>Accounts</option>
+              <option>Tech</option><option>Management</option>
+            </select>
+          </div>
+          <div class="field"><label>Done By</label><input id="al-doneby" placeholder="Name" /></div>
+          <div class="field"><label>Next Action By</label><input id="al-nextby" placeholder="Name" /></div>
+          <div class="field span2"><label class="required">Action Summary</label><input id="al-summary" placeholder="Brief summary" /></div>
+          <div class="field span2"><label>Detailed Notes</label><textarea id="al-notes" placeholder="Detailed notes..."></textarea></div>
+          <div class="field"><label>Client Response</label><textarea id="al-clientresp" placeholder="How client responded..." style="min-height:56px"></textarea></div>
+          <div class="field"><label>Internal Observation</label><textarea id="al-obs" placeholder="Internal notes..." style="min-height:56px"></textarea></div>
+          <div class="field"><label>Next Action Required</label><input id="al-nextaction" placeholder="What needs to happen next" /></div>
+          <div class="field"><label>Next Action Date</label><input id="al-nextdate" type="date" /></div>
+          <div class="field span2">
+            <label>Attach Proof / File (or paste URL)</label>
+            <div class="upload-zone" id="al-upload-zone"
+                 ondragover="handleDragOver(event,'al-upload-zone')"
+                 ondragleave="handleDragLeave(event,'al-upload-zone')"
+                 ondrop="handleDrop(event,'al-upload-zone','al-file-data','al-file-chip')">
+              <input type="file" id="al-file-input" accept="*/*" onchange="handleFileSelect(event,'al-upload-zone','al-file-data','al-file-chip')" />
+              <div class="upload-icon">📎</div>
+              <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop</div>
+            </div>
+            <div id="al-file-chip"></div>
+            <input id="al-file" style="margin-top:6px" placeholder="Or paste Google Drive / URL link..." />
+            <input type="hidden" id="al-file-data" />
+          </div>
+          <div class="field"><label>Update Case Status To</label>
+            <select id="al-status">
+              <option value="">-- No change --</option>
+              <option>Open</option><option>In Progress</option>
+              <option>Pending Response</option><option>Settled</option><option>Closed</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitAction()">✅ Log Action</button>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="padding:0">
+        <div class="card-title" style="padding:16px 20px 0">Action Log</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Action ID</th><th>Case ID</th><th>Date</th><th>Type</th><th>Dept</th><th>Done By</th><th>Summary</th><th>File</th><th>Refund Status</th><th>Next Date</th></tr></thead>
+            <tbody id="action-body"><tr><td colspan="10"><div class="empty-state"><span class="emoji">⚡</span>No actions logged yet.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ /ACTION LOG ══════════════ -->
+
+
+<!-- ══════════════ 6. COMM LOG ══════════════ -->
+<div id="tab-comm-log" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Communication Log</div><div class="section-sub">Log every call, email, WhatsApp, meeting</div></div>
+  </div>
+  <div class="row">
+    <div class="col" style="max-width:480px">
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#e6f4ea">💬</span> Log Communication</div>
+        <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
+          <select id="cl-caseid"><option value="">-- Select Case --</option></select>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Date & Time</label><input id="cl-datetime" type="datetime-local" /></div>
+          <div class="field"><label>Mode</label>
+            <select id="cl-mode">
+              <option>Call</option><option>WhatsApp</option><option>Email</option>
+              <option>Meeting</option><option>Legal Notice</option><option>SMS</option>
+            </select>
+          </div>
+          <div class="field"><label>Direction</label>
+            <select id="cl-dir"><option>Incoming</option><option>Outgoing</option></select>
+          </div>
+          <div class="field"><label>From / To</label><input id="cl-fromto" placeholder="Person name / number" /></div>
+          <div class="field span2"><label class="required">Summary</label><textarea id="cl-summary" placeholder="What was communicated..."></textarea></div>
+          <div class="field span2"><label>Exact Demand / Promise / Threat</label><textarea id="cl-exact" placeholder="Verbatim if important..."></textarea></div>
+          <div class="field"><label>Refund Demanded (₹)</label><input id="cl-refund" type="number" placeholder="0" /></div>
+          <div class="field"><label>Legal Threat?</label>
+            <select id="cl-legal"><option>No</option><option>Yes – Verbal</option><option>Yes – Written</option></select>
+          </div>
+          <div class="field"><label>Social Media Mentioned?</label>
+            <select id="cl-sm"><option>No</option><option>Yes</option></select>
+          </div>
+          <div class="field"><label>Logged By</label><input id="cl-loggedby" placeholder="Your name" /></div>
+          <div class="field span2">
+            <label>Attach Proof File (or paste URL)</label>
+            <div class="upload-zone" id="cl-upload-zone"
+                 ondragover="handleDragOver(event,'cl-upload-zone')"
+                 ondragleave="handleDragLeave(event,'cl-upload-zone')"
+                 ondrop="handleDrop(event,'cl-upload-zone','cl-file-data','cl-file-chip')">
+              <input type="file" id="cl-file-input" accept="*/*" onchange="handleFileSelect(event,'cl-upload-zone','cl-file-data','cl-file-chip')" />
+              <div class="upload-icon">📎</div>
+              <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop</div>
+            </div>
+            <div id="cl-file-chip"></div>
+            <input id="cl-file" style="margin-top:6px" placeholder="Or paste Google Drive / URL link..." />
+            <input type="hidden" id="cl-file-data" />
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitCommLog()">✅ Log Communication</button>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="padding:0">
+        <div class="card-title" style="padding:16px 20px 0">Communication Log</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Comm ID</th><th>Case ID</th><th>Date/Time</th><th>Mode</th><th>Dir</th><th>From/To</th><th>Summary</th><th>File</th><th>Legal?</th></tr></thead>
+            <tbody id="comm-body"><tr><td colspan="9"><div class="empty-state"><span class="emoji">💬</span>No communications logged yet.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ /COMM LOG ══════════════ -->
+
+
+<!-- ══════════════ 7. TIMELINE VIEW ══════════════ -->
+<div id="tab-timeline" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Timeline View</div><div class="section-sub">Full chronological event log per case</div></div>
+  </div>
+  <div class="card">
+    <div class="field" style="max-width:300px;margin-bottom:16px">
+      <label>Filter by Case ID</label>
+      <select id="tl-filter" onchange="renderTimeline()"><option value="">-- All Cases --</option></select>
+    </div>
+    <div id="timeline-container">
+      <div class="empty-state"><span class="emoji">🕒</span>No timeline entries yet.</div>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ /TIMELINE VIEW ══════════════ -->
+
+
+<!-- ══════════════ 8. DOCUMENT INDEX ══════════════ -->
+<div id="tab-doc-index" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Document Index</div><div class="section-sub">Auto-indexed documents + manual uploads</div></div>
+  </div>
+  <div class="doc-index-upload-card">
+    <div class="card-title"><span class="icon" style="background:#e8f0fe">⬆️</span> Upload Document Manually</div>
+    <div class="form-grid cols3">
+      <div class="field"><label class="required">Case ID</label>
+        <select id="di-caseid"><option value="">-- Select Case --</option></select>
+      </div>
+      <div class="field"><label class="required">Document Type</label>
+        <select id="di-doctype">
+          <option>Legal Notice</option><option>MOU / Agreement</option><option>Payment Receipt</option>
+          <option>WhatsApp Screenshot</option><option>Email Screenshot</option><option>Police Complaint</option>
+          <option>Court Document</option><option>Refund Proof</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Uploaded By</label><input id="di-uploadedby" placeholder="Your name" /></div>
+      <div class="field span3"><label>File Description / Summary</label>
+        <input id="di-summary" placeholder="Brief description of this document..." />
+      </div>
+      <div class="field span3">
+        <label class="required">Attach File</label>
+        <div class="upload-zone" id="di-upload-zone"
+             ondragover="handleDragOver(event,'di-upload-zone')"
+             ondragleave="handleDragLeave(event,'di-upload-zone')"
+             ondrop="handleDrop(event,'di-upload-zone','di-file-data','di-file-chip')">
+          <input type="file" id="di-file-input" accept="*/*" onchange="handleFileSelect(event,'di-upload-zone','di-file-data','di-file-chip')" />
+          <div class="upload-icon">📂</div>
+          <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop any file here</div>
+        </div>
+        <div id="di-file-chip"></div>
+        <input id="di-file-url" style="margin-top:6px" placeholder="Or paste a Google Drive / external URL instead..." />
+        <input type="hidden" id="di-file-data" />
+      </div>
+      <div class="field"><label>Remarks</label><input id="di-remarks" placeholder="Optional notes..." /></div>
+    </div>
     <div class="btn-row">
-      <button class="btn btn-success" onclick="submitNewCase()">✅ Create Case & Generate Study</button>
-      <button class="btn btn-outline" onclick="clearNewCaseForm()">🔄 Clear Form</button>
+      <button class="btn btn-primary" onclick="submitDocUpload()">📁 Add to Document Index</button>
     </div>
   </div>
-
-<!-- ══════════════════════════════════ ADMIN / USER PANEL ══════════════════════════════════ -->
-  <div id="tab-admin-panel" class="section">
-    <div class="section-header">
-      <div>
-        <div class="section-title" id="admin-panel-title">Admin Panel</div>
-        <div class="section-sub" id="admin-panel-subtitle">Refund approvals and user creation</div>
-      </div>
-    </div>
-
-    <div class="card" id="admin-refund-card">
-      <div class="card-title">💰 Pending Refund Approvals</div>
-      <div class="table-wrap">
-        <table id="refund-approval-table">
-          <thead>
-            <tr><th>Case ID</th><th>Amount / Notes</th><th>Requested By</th><th>Requested At</th><th>Action</th></tr>
-          </thead>
-          <tbody id="refund-body">
-            <tr><td colspan="5"><div class="empty-state">No pending refund approvals.</div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title" id="user-create-title">👤 Create New User</div>
-      <div class="form-grid">
-        <div class="field"><label>Email</label><input id="new-user-email" type="email" placeholder="user@company.com"></div>
-        <div class="field"><label>Password</label><input id="new-user-pass" type="password" placeholder="Temporary password"></div>
-        <div class="field"><label>Role</label>
-          <select id="new-user-role">
-            <option>Admin</option>
-            <option>Operations</option>
-            <option>Staff</option>
-          </select>
-        </div>
-        <div class="field" style="justify-content:flex-end">
-          <button class="btn btn-primary" onclick="createNewUser()">Create User</button>
-        </div>
-      </div>
+  <div class="search-bar">
+    <input id="di-search" placeholder="🔍 Search documents..." oninput="renderDocIndex()" style="max-width:300px"/>
+  </div>
+  <div class="card" style="padding:0">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Doc ID</th><th>Case ID</th><th>Upload Date</th><th>Source</th><th>Doc Type</th><th>File Name / Summary</th><th>Link</th><th>Uploaded By</th></tr></thead>
+        <tbody id="doc-body"><tr><td colspan="8"><div class="empty-state"><span class="emoji">📁</span>No documents indexed yet.</div></td></tr></tbody>
+      </table>
     </div>
   </div>
-
-<!-- ══════════════════════════════════ CASE MASTER ══════════════════════════════════ -->
-  <div id="tab-case-master" class="section"> <!-- YE LINE MISSING THI -->
-    <div class="section-header">
-      <div>
-        <div class="section-title">Case Master Register</div>
-        <div class="section-sub">All cases with current status</div>
-      </div>
-      <div class="btn-row">
-        <label class="btn btn-primary btn-sm" style="cursor:pointer; background: #673ab7; border:none;">
-          📥 IMPORT CSV (BULK)
-          <input type="file" id="import-csv-input" accept=".csv" style="display:none;" onchange="importCasesCSV(event)">
-        </label>
-        <button class="btn btn-outline btn-sm" onclick="exportCaseMaster()">⬇ Export CSV</button>
-      </div>
-    </div>
-    
-    <div class="search-bar">
-      <input id="cm-search" placeholder="🔍 Search by Case ID, Client Name, Status..." oninput="renderCaseMaster()" style="max-width:340px"/>
-      <select id="cm-filter-status" onchange="renderCaseMaster()" style="width:140px">
-        <option value="">All Status</option>
-        <option>Open</option><option>In Progress</option><option>Settled</option><option>Closed</option>
-      </select>
-      <select id="cm-filter-priority" onchange="renderCaseMaster()" style="width:130px">
-        <option value="">All Priority</option>
-        <option>High</option><option>Medium</option><option>Low</option>
-      </select>
-    </div>
-    
-    <div class="card" style="padding:0">
-      <div class="table-wrap">
-        <table id="cm-table">
-          <thead>
-            <tr>
-              <th>Case ID</th><th>Created</th><th>Client</th><th>Company</th>
-              <th>Services</th><th>Amount Paid</th><th>Priority</th><th>Status</th>
-              <th>Initiated By</th><th>Last Update</th><th>Next Action</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="cm-body">
-            <tr><td colspan="12"><div class="empty-state">No cases found.</div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div> <!-- TAB CLOSING -->
-  <!-- ══════════════════════════════════ HISTORY UPLOAD ══════════════════════════════════ -->
-  <div id="tab-history" class="section">
-    <div class="section-header">
-      <div><div class="section-title">History Upload</div><div class="section-sub">Add pre-case or background history entries</div></div>
-    </div>
-    <div class="row">
-      <div class="col" style="max-width:480px">
-        <div class="card">
-          <div class="card-title"><span class="icon" style="background:#e8f0fe">📜</span> Add History Entry</div>
-          <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
-            <select id="hu-caseid" onchange="validateCaseId('hu-caseid')"><option value="">-- Select Case --</option></select>
-          </div>
-          <div class="form-grid">
-            <div class="field"><label class="required">Historical Event Date</label><input id="hu-date" type="date"/></div>
-            <div class="field"><label>History Type</label>
-              <select id="hu-type">
-                <option>Complaint</option><option>Meeting</option><option>Payment</option>
-                <option>Legal Notice</option><option>Email</option><option>WhatsApp</option><option>Other</option>
-              </select>
-            </div>
-            <div class="field span2"><label class="required">Event Summary</label><input id="hu-summary" placeholder="One-line summary" /></div>
-            <div class="field span2"><label>Detailed Notes</label><textarea id="hu-notes" placeholder="Additional details..."></textarea></div>
-            <div class="field span2">
-              <label>Attach File (or paste URL)</label>
-              <div class="upload-zone" id="hu-upload-zone" ondragover="handleDragOver(event,'hu-upload-zone')" ondragleave="handleDragLeave(event,'hu-upload-zone')" ondrop="handleDrop(event,'hu-upload-zone','hu-file-data','hu-file-chip')">
-                <input type="file" id="hu-file-input" accept="*/*" onchange="handleFileSelect(event,'hu-upload-zone','hu-file-data','hu-file-chip')" />
-                <div class="upload-icon">📎</div>
-                <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop any file</div>
-                <div class="upload-label" style="font-size:11px;margin-top:2px">PDF, Image, Word, Excel, etc.</div>
-              </div>
-              <div id="hu-file-chip"></div>
-              <input id="hu-file" style="margin-top:6px" placeholder="Or paste Google Drive / URL link..." />
-              <input type="hidden" id="hu-file-data" />
-            </div>
-            <div class="field"><label>Source</label><input id="hu-source" placeholder="e.g. Email, WhatsApp" /></div>
-            <div class="field"><label>Entered By</label><input id="hu-enteredby" placeholder="Your name" /></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="submitHistory()">✅ Add History Entry</button>
-          </div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card" style="padding:0">
-          <div class="card-title" style="padding:16px 20px 0">History Log</div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Hist ID</th><th>Case ID</th><th>Event Date</th><th>Type</th><th>Summary</th><th>File</th> <th>Entered By</th></tr></thead>
-              <tbody id="hist-body"><tr><td colspan="6"><div class="empty-state"><span class="emoji">📜</span>No history entries yet.</div></td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════ ACTION LOG ══════════════════════════════════ -->
-  <div id="tab-action-log" class="section">
-    <div class="section-header">
-      <div><div class="section-title">Action Log</div><div class="section-sub">Record every action taken on a case</div></div>
-    </div>
-    <div class="row">
-      <div class="col" style="max-width:480px">
-        <div class="card">
-          <div class="card-title"><span class="icon" style="background:#fef7e0">⚡</span> Log New Action</div>
-          <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
-            <select id="al-caseid"><option value="">-- Select Case --</option></select>
-          </div>
-          <div class="form-grid">
-            <div class="field"><label>Action Type</label>
-              <select id="al-type">
-                <option>Negotiation Call</option><option>Legal Notice Sent</option>
-                <option>Meeting</option><option>Email Sent</option><option>WhatsApp</option>
-                <option>Refund Request</option><option>Refund Processed</option><option>Document Filed</option><option>Other</option>
-              </select>
-            </div>
-            <div class="field"><label>Department</label>
-              <select id="al-dept">
-                <option>Negotiation</option><option>Legal</option><option>Accounts</option>
-                <option>Tech</option><option>Management</option>
-              </select>
-            </div>
-            <div class="field"><label>Done By</label><input id="al-doneby" placeholder="Name" /></div>
-            <div class="field"><label>Next Action By</label><input id="al-nextby" placeholder="Name" /></div>
-            <div class="field span2"><label class="required">Action Summary</label><input id="al-summary" placeholder="Brief summary" /></div>
-            <div class="field span2"><label>Detailed Notes</label><textarea id="al-notes" placeholder="Detailed notes..."></textarea></div>
-            <div class="field"><label>Client Response</label><textarea id="al-clientresp" placeholder="How client responded..." style="min-height:56px"></textarea></div>
-            <div class="field"><label>Internal Observation</label><textarea id="al-obs" placeholder="Internal notes..." style="min-height:56px"></textarea></div>
-            <div class="field"><label>Next Action Required</label><input id="al-nextaction" placeholder="What needs to happen next" /></div>
-            <div class="field"><label>Next Action Date</label><input id="al-nextdate" type="date" /></div>
-            <div class="field span2">
-              <label>Attach Proof / File (or paste URL)</label>
-              <div class="upload-zone" id="al-upload-zone" ondragover="handleDragOver(event,'al-upload-zone')" ondragleave="handleDragLeave(event,'al-upload-zone')" ondrop="handleDrop(event,'al-upload-zone','al-file-data','al-file-chip')">
-                <input type="file" id="al-file-input" accept="*/*" onchange="handleFileSelect(event,'al-upload-zone','al-file-data','al-file-chip')" />
-                <div class="upload-icon">📎</div>
-                <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop</div>
-              </div>
-              <div id="al-file-chip"></div>
-              <input id="al-file" style="margin-top:6px" placeholder="Or paste Google Drive / URL link..." />
-              <input type="hidden" id="al-file-data" />
-            </div>
-            <div class="field"><label>Update Case Status To</label>
-              <select id="al-status">
-                <option value="">-- No change --</option>
-                <option>Open</option><option>In Progress</option>
-                <option>Pending Response</option><option>Settled</option><option>Closed</option>
-              </select>
-            </div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="submitAction()">✅ Log Action</button>
-          </div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card" style="padding:0">
-          <div class="card-title" style="padding:16px 20px 0">Action Log</div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Action ID</th><th>Case ID</th><th>Date</th><th>Type</th><th>Dept</th><th>Done By</th><th>Summary</th><th>File</th><th>Refund Status</th><th>Next Date</th></tr></thead>
-              <tbody id="action-body"><tr><td colspan="10"><div class="empty-state"><span class="emoji">⚡</span>No actions logged yet.</div></td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════ COMM LOG ══════════════════════════════════ -->
-  <div id="tab-comm-log" class="section">
-    <div class="section-header">
-      <div><div class="section-title">Communication Log</div><div class="section-sub">Log every call, email, WhatsApp, meeting</div></div>
-    </div>
-    <div class="row">
-      <div class="col" style="max-width:480px">
-        <div class="card">
-          <div class="card-title"><span class="icon" style="background:#e6f4ea">💬</span> Log Communication</div>
-          <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
-            <select id="cl-caseid"><option value="">-- Select Case --</option></select>
-          </div>
-          <div class="form-grid">
-            <div class="field"><label>Date & Time</label><input id="cl-datetime" type="datetime-local" /></div>
-            <div class="field"><label>Mode</label>
-              <select id="cl-mode">
-                <option>Call</option><option>WhatsApp</option><option>Email</option>
-                <option>Meeting</option><option>Legal Notice</option><option>SMS</option>
-              </select>
-            </div>
-            <div class="field"><label>Direction</label>
-              <select id="cl-dir"><option>Incoming</option><option>Outgoing</option></select>
-            </div>
-            <div class="field"><label>From / To</label><input id="cl-fromto" placeholder="Person name / number" /></div>
-            <div class="field span2"><label class="required">Summary</label><textarea id="cl-summary" placeholder="What was communicated..."></textarea></div>
-            <div class="field span2"><label>Exact Demand / Promise / Threat</label><textarea id="cl-exact" placeholder="Verbatim if important..."></textarea></div>
-            <div class="field"><label>Refund Demanded (₹)</label><input id="cl-refund" type="number" placeholder="0" /></div>
-            <div class="field"><label>Legal Threat?</label>
-              <select id="cl-legal"><option>No</option><option>Yes – Verbal</option><option>Yes – Written</option></select>
-            </div>
-            <div class="field"><label>Social Media Mentioned?</label>
-              <select id="cl-sm"><option>No</option><option>Yes</option></select>
-            </div>
-            <div class="field"><label>Logged By</label><input id="cl-loggedby" placeholder="Your name" /></div>
-            <div class="field span2">
-              <label>Attach Proof File (or paste URL)</label>
-              <div class="upload-zone" id="cl-upload-zone" ondragover="handleDragOver(event,'cl-upload-zone')" ondragleave="handleDragLeave(event,'cl-upload-zone')" ondrop="handleDrop(event,'cl-upload-zone','cl-file-data','cl-file-chip')">
-                <input type="file" id="cl-file-input" accept="*/*" onchange="handleFileSelect(event,'cl-upload-zone','cl-file-data','cl-file-chip')" />
-                <div class="upload-icon">📎</div>
-                <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop</div>
-              </div>
-              <div id="cl-file-chip"></div>
-              <input id="cl-file" style="margin-top:6px" placeholder="Or paste Google Drive / URL link..." />
-              <input type="hidden" id="cl-file-data" />
-            </div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="submitCommLog()">✅ Log Communication</button>
-          </div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card" style="padding:0">
-          <div class="card-title" style="padding:16px 20px 0">Communication Log</div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Comm ID</th><th>Case ID</th><th>Date/Time</th><th>Mode</th><th>Dir</th><th>From/To</th><th>Summary</th><th>Legal?</th></tr></thead>
-              <tbody id="comm-body"><tr><td colspan="8"><div class="empty-state"><span class="emoji">💬</span>No communications logged yet.</div></td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════ TIMELINE VIEW ══════════════════════════════════ -->
-  <div id="tab-timeline" class="section">
-    <div class="section-header">
-      <div><div class="section-title">Timeline View</div><div class="section-sub">Full chronological event log per case</div></div>
-    </div>
-    <div class="card">
-      <div class="field" style="max-width:300px;margin-bottom:16px">
-        <label>Filter by Case ID</label>
-        <select id="tl-filter" onchange="renderTimeline()"><option value="">-- All Cases --</option></select>
-      </div>
-      <div id="timeline-container">
-        <div class="empty-state"><span class="emoji">🕒</span>No timeline entries yet.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════ DOCUMENT INDEX ══════════════════════════════════ -->
-  <div id="tab-doc-index" class="section">
-    <div class="section-header">
-      <div><div class="section-title">Document Index</div><div class="section-sub">Auto-indexed documents from all form submissions + manual uploads</div></div>
-    </div>
-
-    <!-- Manual Upload Card -->
-    <div class="doc-index-upload-card">
-      <div class="card-title"><span class="icon" style="background:#e8f0fe">⬆️</span> Upload Document Manually</div>
-      <div class="form-grid cols3">
-        <div class="field">
-          <label class="required">Case ID</label>
-          <select id="di-caseid"><option value="">-- Select Case --</option></select>
-        </div>
-        <div class="field">
-          <label class="required">Document Type</label>
-          <select id="di-doctype">
-            <option>Legal Notice</option><option>MOU / Agreement</option><option>Payment Receipt</option>
-            <option>WhatsApp Screenshot</option><option>Email Screenshot</option><option>Police Complaint</option>
-            <option>Court Document</option><option>Refund Proof</option><option>Other</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Uploaded By</label>
-          <input id="di-uploadedby" placeholder="Your name" />
-        </div>
-        <div class="field span3">
-          <label>File Description / Summary</label>
-          <input id="di-summary" placeholder="Brief description of this document..." />
-        </div>
-        <div class="field span3">
-          <label class="required">Attach File</label>
-          <div class="upload-zone" id="di-upload-zone" ondragover="handleDragOver(event,'di-upload-zone')" ondragleave="handleDragLeave(event,'di-upload-zone')" ondrop="handleDrop(event,'di-upload-zone','di-file-data','di-file-chip')">
-            <input type="file" id="di-file-input" accept="*/*" onchange="handleFileSelect(event,'di-upload-zone','di-file-data','di-file-chip')" />
-            <div class="upload-icon">📂</div>
-            <div class="upload-label"><strong>Click to browse</strong> or drag &amp; drop any file here</div>
-            <div class="upload-label" style="font-size:11px;margin-top:2px">PDF, Image, Word, Excel, ZIP, etc.</div>
-          </div>
-          <div id="di-file-chip"></div>
-          <input id="di-file-url" style="margin-top:6px" placeholder="Or paste a Google Drive / external URL instead..." />
-          <input type="hidden" id="di-file-data" />
-        </div>
-        <div class="field"><label>Remarks</label><input id="di-remarks" placeholder="Optional notes..." /></div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="submitDocUpload()">📁 Add to Document Index</button>
-      </div>
-    </div>
-    <div class="search-bar">
-      <input id="di-search" placeholder="🔍 Search documents..." oninput="renderDocIndex()" style="max-width:300px"/>
-    </div>
-    <div class="card" style="padding:0">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Doc ID</th><th>Case ID</th><th>Upload Date</th><th>Source</th><th>Doc Type</th><th>File Name / Summary</th><th>Link</th><th>Uploaded By</th></tr></thead>
-          <tbody id="doc-body"><tr><td colspan="8"><div class="empty-state"><span class="emoji">📁</span>No documents indexed yet.</div></td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════ CASE STUDY ══════════════════════════════════ -->
-  <div id="tab-case-study" class="section">
-    <div class="section-header">
-      <div><div class="section-title">Case Study Generator</div><div class="section-sub">Auto-compiles case data into a formatted study document</div></div>
-      <!-- Case Study Tab ke andar -->
-<div class="btn-row" id="cs-download-container" style="display:none; margin-bottom:10px;">
-  <button class="btn btn-danger" onclick="downloadPDF()">📕 Download as PDF</button>
 </div>
+<!-- ══════════════ /DOCUMENT INDEX ══════════════ -->
+
+
+<!-- ══════════════ 9. CASE STUDY ══════════════ -->
+<div id="tab-case-study" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Case Study Generator</div><div class="section-sub">Auto-compiles case data into a formatted study document</div></div>
+    <div class="btn-row" id="cs-download-container" style="display:none;">
+      <button class="btn btn-danger" onclick="downloadPDF()">📕 Download as PDF</button>
     </div>
-    <div class="row">
-      <div class="col" style="max-width:320px">
-        <div class="card">
-          <div class="card-title"><span class="icon" style="background:#e8f0fe">📄</span> Generate / Refresh</div>
-          <div class="field" style="margin-bottom:12px">
-            <label>Select Case ID</label>
-            <select id="cs-caseid"><option value="">-- Select Case --</option></select>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="generateCaseStudy()">📄 Generate Case Study</button>
-          </div>
-          <hr class="divider"/>
-          <div class="card-title"><span class="icon" style="background:#fce8e6">📋</span> Case Study Control</div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Case ID</th><th>Status</th><th>Last Refresh</th></tr></thead>
-              <tbody id="study-control-body"><tr><td colspan="3"><div class="empty-state text-muted">No entries</div></td></tr></tbody>
-            </table>
-          </div>
+  </div>
+  <div class="row">
+    <div class="col" style="max-width:320px">
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#e8f0fe">📄</span> Generate / Refresh</div>
+        <div class="field" style="margin-bottom:12px">
+          <label>Select Case ID</label>
+          <select id="cs-caseid"><option value="">-- Select Case --</option></select>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="generateCaseStudy()">📄 Generate Case Study</button>
+        </div>
+        <hr class="divider"/>
+        <div class="card-title"><span class="icon" style="background:#fce8e6">📋</span> Case Study Control</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Case ID</th><th>Status</th><th>Last Refresh</th></tr></thead>
+            <tbody id="study-control-body"><tr><td colspan="3"><div class="empty-state text-muted">No entries</div></td></tr></tbody>
+          </table>
         </div>
       </div>
-      <div class="col">
-        <div class="card" id="case-study-preview" style="display:none">
-          <div class="card-title" id="cs-preview-title">Case Study Preview</div>
-          <div id="cs-preview-content"></div>
-        </div>
-        <div class="card" id="cs-empty" >
-          <div class="empty-state"><span class="emoji">📄</span>Select a Case ID and click Generate Case Study to see the full compiled study here.</div>
-        </div>
+    </div>
+    <div class="col">
+      <div class="card" id="case-study-preview" style="display:none">
+        <div class="card-title" id="cs-preview-title">Case Study Preview</div>
+        <div id="cs-preview-content"></div>
+      </div>
+      <div class="card" id="cs-empty">
+        <div class="empty-state"><span class="emoji">📄</span>Select a Case ID and click Generate Case Study to see the full compiled study here.</div>
       </div>
     </div>
   </div>
+</div>
+<!-- ══════════════ /CASE STUDY ══════════════ -->
 
-  
 
+<!-- ══════════════ 10. ADMIN PANEL ══════════════ -->
+<div id="tab-admin-panel" class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title" id="admin-panel-title">Admin Panel</div>
+      <div class="section-sub" id="admin-panel-subtitle">Refund approvals and user creation</div>
+    </div>
+  </div>
+
+  <div class="card" id="admin-refund-card">
+    <div class="card-title">💰 Pending Refund Approvals</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Case ID</th><th>Amount / Notes</th><th>Requested By</th><th>Requested At</th><th>Action</th></tr></thead>
+        <tbody id="refund-body"><tr><td colspan="5"><div class="empty-state">No pending refund approvals.</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="user-create-title">👤 Create New User</div>
+    <div class="form-grid">
+      <div class="field"><label>Email</label><input id="new-user-email" type="email" placeholder="user@company.com"></div>
+      <div class="field"><label>Password</label><input id="new-user-pass" type="password" placeholder="Temporary password"></div>
+      <div class="field"><label>Role</label>
+        <select id="new-user-role"><option>Admin</option><option>Operations</option><option>Staff</option></select>
+      </div>
+      <div class="field" style="justify-content:flex-end">
+        <button class="btn btn-primary" onclick="createNewUser()">Create User</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ /ADMIN PANEL ══════════════ -->
+
+
+<!-- ══════════════ 11. DATA SEARCH ══════════════ -->
+<div id="tab-internal-search" class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Internal Master Data Search</div>
+      <div class="section-sub">Search anything from the uploaded sample data</div>
+    </div>
+    <div class="btn-row">
+      <label class="btn btn-primary btn-sm" style="cursor:pointer; background:#4caf50;">
+        📥 Upload Sample CSV
+        <input type="file" accept=".csv" style="display:none;" onchange="importSampleCSV(event)">
+      </label>
+    </div>
+  </div>
+  <div class="card">
+    <input type="text" id="sample-search-input"
+           placeholder="Type Company Name, Contact, BDE or Email to search..."
+           style="width:100%; padding:15px; font-size:16px; border-radius:8px; border:2px solid var(--blue);"
+           oninput="renderSampleSearch()">
+  </div>
+  <div class="card" style="padding:0; overflow-x:auto;">
+    <div class="table-wrap">
+      <table>
+        <thead style="background:#444; color:white;">
+          <tr>
+            <th>Date</th><th>Company Name</th><th>Contact Person</th><th>Contact</th>
+            <th>Email ID</th><th>Service</th><th>BDE</th><th>Total Amt</th>
+            <th>Amt (Ex.GST)</th><th>Work Status</th><th>Department</th><th>MOU Status</th>
+          </tr>
+        </thead>
+        <tbody id="sample-search-body">
+          <tr><td colspan="12" class="empty-state">Upload CSV to start searching</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ /DATA SEARCH ══════════════ -->
 
 </div><!-- /main -->
 
@@ -785,60 +764,6 @@
 
 <!-- Toast container -->
 <div id="toast"></div>
-
-
-    <div id="tab-internal-search" class="section" style="max-height: 400px; overflow-y: auto;">
-
-    <div class="section-header">
-        <div>
-            <div class="section-title">Internal Master Data Search</div>
-            <div class="section-sub">Search anything from the uploaded sample data</div>
-        </div>
-
-        <div class="btn-row">
-            <label class="btn btn-primary btn-sm" style="cursor:pointer; background:#4caf50;">
-                📥 Upload Sample CSV
-                <input type="file" accept=".csv" style="display:none;" onchange="importSampleCSV(event)">
-            </label>
-        </div>
-    </div>
-
-
-    <!-- Search Bar -->
-    <div class="card">
-        <input type="text" id="sample-search-input" placeholder="Type Company Name, Contact, BDE or Email to search..." 
-               style="width:100%; padding:15px; font-size:16px; border-radius:8px; border:2px solid var(--blue);" 
-               oninput="renderSampleSearch()">
-    </div>
-
-    <!-- Results Table -->
-    <div class="card" style="padding:0">
-        <div class="table-wrap">
-            <table>
-                <thead style="background:#444">
-                    <tr>
-        <th>Date</th>
-        <th>Company Name</th>
-        <th>Contact Person</th>
-        <th>Contact</th>
-        <th>Email ID</th>
-        <th>Service</th>
-        <th>BDE</th>
-        <th>Total Amt</th>
-        <th>Amt (Ex.GST)</th>
-        <th>Work Status</th>
-        <th>Department</th>
-        <th>MOU Status</th>
-    </tr>
-                </thead>
-                <tbody id="sample-search-body">
-                    <tr><td colspan="8" class="empty-state">Upload CSV to start searching</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-</div>
 
 <script src="script.js"></script>
 </body>

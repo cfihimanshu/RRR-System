@@ -30,8 +30,14 @@
 
   /* ── Main layout ── */
   .main { padding: 20px; max-width: 1400px; margin: 0 auto; }
-  .section { display: none; }
-  .section.active { display: block; }
+  .section {
+    display: none !important; /* Pehle sab hide karo */
+}
+
+.section.active {
+    display: block !important; /* Sirf active wala dikhao */
+    visibility: visible !important;
+}
 
   /* ── Cards ── */
   .card { background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--gray-border); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
