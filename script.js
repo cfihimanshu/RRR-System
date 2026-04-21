@@ -18,7 +18,7 @@ window.addEventListener("pageshow", redirectIfLoggedOut);
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_xCWWCoBc3wj-trWKYt4wYx18Od6DVOUYCgGYITooQt8d_9Mckv6dJlu_SfjnblugfA/exec";
 const LS_KEY = "RRR_DB_v1";
 const SAMPLE_DATA_KEY = "RRR_SAMPLE_DATA_v1";
-const CLOUD_TIMEOUT_MS = 60000;
+const CLOUD_TIMEOUT_MS = 90000;
 
 let DB = { cases:[], history:[], actions:[], comms:[], docs:[], timeline:[], studyControl:[], sampleData:[], auditLogs:[] };
 
@@ -52,57 +52,57 @@ function restoreSampleDataFromBackup() {
 // ══════════════════════════════════════
 //  DB LOAD — non-blocking
 // ══════════════════════════════════════
+// ── 1. LOAD DATA FROM CLOUD ONLY ──
 async function loadDB() {
-    // 1. Load localStorage first so UI is instantly usable
+    console.log("Fetching from Cloud...");
+    toast("Cloud se data load ho raha hai...", "info");
+
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
+
+        // Fetch direct from Google Script
+        const res = await fetch(SCRIPT_URL + "?t=" + Date.now(), { 
+            signal: controller.signal 
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.cases)) {
+                DB = data; // Data RAM mein load ho gaya
+                normalizeDBShape();
+                refreshAllUI(); // Saari tables ek saath refresh
+                console.log("✅ Cloud Data Loaded Successfully");
+            }
+        } else {
+            throw new Error("Server response not ok");
+        }
+    } catch(e) {
+        console.error("Cloud load failed:", e.message);
+        toast("Internet Slow hai! Refresh karein.", "error");
+        
+        // Fallback: Agar cloud fail ho jaye, tabhi local se uthao (sirf safety ke liye)
         const local = localStorage.getItem(LS_KEY);
         if (local) {
             DB = JSON.parse(local);
             normalizeDBShape();
-            restoreSampleDataFromBackup();
             refreshAllUI();
         }
-    } catch(e) { console.warn("Local load error:", e); }
-
-    // 2. Cloud sync in background with timeout
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
-        const res = await fetch(SCRIPT_URL + "?t=" + Date.now(), { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-            const data = await res.json();
-            if (data && Array.isArray(data.cases)) {
-                DB = data;
-                normalizeDBShape();
-                restoreSampleDataFromBackup();
-                refreshAllUI();
-                console.log("Cloud Data Loaded");
-            }
-        }
-    } catch(e) {
-        if (e.name !== "AbortError") console.warn("Cloud load failed:", e.message);
     }
 }
 
-// Pehle ye constant define karein (Script ke top par ya function se upar)
-
-
+// ── 2. SAVE DATA TO CLOUD ONLY ──
 async function saveDB() {
-    console.log("🔄 Syncing data...");
+    console.log("🔄 Syncing to Google Sheets...");
 
-    // 1. Pehle Local Storage mein save karein (Safe Local Backup)
+    // RAM data ko local storage mein sirf temporary backup rakhte hain 
+    // taaki browser crash ho to data na jaye, par main storage Sheet hi rahegi
     try { 
         localStorage.setItem(LS_KEY, JSON.stringify(DB)); 
-        // Agar aapne alag se Sample Data backup function banaya hai toh wo call hoga
-        if (typeof persistSampleDataBackup === "function") {
-            persistSampleDataBackup(); 
-        }
-    } catch(e) {
-        console.warn("Local storage full, saving to cloud only.", e);
-    }
+    } catch(e) { console.warn("Local storage full, using cloud only."); }
 
-    // 2. Cloud Sync Logic with Timeout
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
@@ -110,7 +110,7 @@ async function saveDB() {
         await fetch(SCRIPT_URL, { 
             method: "POST", 
             body: JSON.stringify(DB), 
-            mode: "no-cors", // Google Apps Script ke liye zaruri
+            mode: "no-cors", 
             signal: controller.signal 
         });
 
@@ -119,25 +119,11 @@ async function saveDB() {
         
     } catch(e) {
         if (e.name === "AbortError") {
-            // Timeout hone par user ko inform karein
-            toast("Cloud sync timed out. Data saved locally.", "error");
-            console.warn("Cloud sync took too long (> 60s). Data might still save in backend.");
+            console.warn("Sync slow hai, backend mein process ho raha hoga.");
         } else {
-            console.warn("Cloud sync error:", e);
-            toast("Sync Error! Check your connection.", "error");
+            console.error("Cloud sync error:", e);
+            toast("Cloud Sync Fail! Internet check karein.", "error");
         }
-    }
-}
-
-// ── EXTRA HELPER (In case if it's missing) ──
-// Agar aapne persistSampleDataBackup function nahi banaya hai toh ye use karein:
-function persistSampleDataBackup() {
-    try {
-        if (DB.sampleData && DB.sampleData.length > 0) {
-            localStorage.setItem("RRR_Sample_Backup", JSON.stringify(DB.sampleData));
-        }
-    } catch(e) {
-        console.warn("Could not backup sample data separately.");
     }
 }
 
@@ -1023,41 +1009,108 @@ async function importCasesCSV(event) {
 // ══════════════════════════════════════
 //  DATA SEARCH (SAMPLE CSV)
 // ══════════════════════════════════════
+// ── 1. IMPORT SAMPLE CSV (Cloud Ready) ──
 async function importSampleCSV(event) {
-    const file=event.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=async function(e){
-        const lines=e.target.result.split(/\r?\n/);
-        DB.sampleData=[];
-        for (let i=1;i<lines.length;i++){
+    const file = event.target.files[0]; 
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/);
+        
+        // RAM data clear karein aur naya bharo
+        DB.sampleData = []; 
+
+        for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
-            const col=lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            const clean=v=>v?v.replace(/^"|"$/g,"").trim():"";
-            DB.sampleData.push({date:clean(col[0]),company:clean(col[1]),person:clean(col[2]),contact:clean(col[3]),email:clean(col[4]),service:clean(col[5]),bde:clean(col[6]),total:clean(col[7]),net:clean(col[8]),status:clean(col[9]),dept:clean(col[10]),mou:clean(col[11])});
+
+            // Regex use kiya taaki Company Name ke andar wale commas block na karein
+            const col = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            const clean = (val) => val ? val.replace(/^"|"$/g, "").trim() : "";
+
+            // Mapping (A to L columns)
+            DB.sampleData.push({
+                date:    clean(col[0]),  // Date
+                company: clean(col[1]),  // Company Name
+                person:  clean(col[2]),  // Contact Person
+                contact: clean(col[3]),  // Phone
+                email:   clean(col[4]),  // Email
+                service: clean(col[5]),  // Service
+                bde:     clean(col[6]),  // BDE
+                total:   clean(col[7]),  // Total Amount
+                net:     clean(col[8]),  // Amt without GST
+                status:  clean(col[9]),  // Work Status
+                dept:    clean(col[10]), // Department
+                mou:     clean(col[11])  // MOU Status
+            });
         }
-        toast(`${DB.sampleData.length} Records Uploaded!`,"success");
-        persistSampleDataBackup(); renderSampleSearch(); await saveDB();
+
+        toast(`${DB.sampleData.length} Records Uploaded Successfully!`, "success");
+        
+        // Frontend refresh karein
+        renderSampleSearch(); 
+        
+        // Seedha Cloud par save karein (No localStorage needed)
+        await saveDB(); 
     };
     reader.readAsText(file);
+    event.target.value = ""; // Input clear karein agli file ke liye
 }
 function normalizeSampleSearchValue(v) { return (v||"").toString().toLowerCase().replace(/\s+/g," ").trim(); }
 function renderSampleSearch() {
-    const searchInput=document.getElementById("sample-search-input");
-    const body=document.getElementById("sample-search-body");
-    if (!searchInput||!body) return;
-    const query=normalizeSampleSearchValue(searchInput.value);
-    if (!DB.sampleData||!DB.sampleData.length) { body.innerHTML=`<tr><td colspan="12" class="empty-state">No data available. Please upload CSV.</td></tr>`; return; }
-    const filtered=!query?DB.sampleData:DB.sampleData.filter(d=>[d.date,d.company,d.person,d.contact,d.email,d.service,d.bde,d.total,d.net,d.status,d.dept,d.mou].map(normalizeSampleSearchValue).join(" ").includes(query));
-    if (!filtered.length) { body.innerHTML=`<tr><td colspan="12" class="empty-state">No matching results found for "${query}"</td></tr>`; return; }
-    body.innerHTML=filtered.map(d=>`<tr>
-        <td style="white-space:nowrap">${d.date||"-"}</td>
-        <td><strong>${d.company||"-"}</strong></td>
-        <td>${d.person||"-"}</td><td>${d.contact||"-"}</td><td>${d.email||"-"}</td><td>${d.service||"-"}</td><td>${d.bde||"-"}</td>
-        <td style="font-weight:bold;color:var(--green)">₹${d.total||"0"}</td>
-        <td>₹${d.net||"0"}</td>
-        <td><span class="badge ${d.status==='Completed'?'badge-closed':'badge-pending'}">${d.status||"Pending"}</span></td>
-        <td>${d.dept||"-"}</td><td>${d.mou||"No"}</td>
-    </tr>`).join("");
+    const searchInput = document.getElementById("sample-search-input");
+    const body = document.getElementById("sample-search-body");
+    
+    if (!body) return;
+
+    // Data check
+    if (!DB.sampleData || !DB.sampleData.length) { 
+        body.innerHTML = `<tr><td colspan="12" class="empty-state">No data available in Cloud. Please upload CSV.</td></tr>`; 
+        return; 
+    }
+
+    // Search query ko normalize karein
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+    // Filtering Logic (Saari fields mein search karega)
+    const filtered = !query ? DB.sampleData : DB.sampleData.filter(d => {
+        return Object.values(d).some(val => 
+            String(val).toLowerCase().includes(query)
+        );
+    });
+
+    if (!filtered.length) { 
+        body.innerHTML = `<tr><td colspan="12" class="empty-state">No matching results found for "${query}"</td></tr>`; 
+        return; 
+    }
+
+    // Table rows generate karein (12 Columns)
+    body.innerHTML = filtered.map(d => `
+        <tr>
+            <td style="white-space:nowrap">${d.date || "-"}</td>
+            <td><strong>${d.company || "-"}</strong></td>
+            <td>${d.person || "-"}</td>
+            <td>${d.contact || "-"}</td>
+            <td>${d.email || "-"}</td>
+            <td>${d.service || "-"}</td>
+            <td>${d.bde || "-"}</td>
+            <td style="font-weight:bold; color:var(--green)">₹${d.total || "0"}</td>
+            <td>₹${d.net || "0"}</td>
+            <td><span class="badge ${d.status === 'Completed' ? 'badge-closed' : 'badge-pending'}">${d.status || "Pending"}</span></td>
+            <td>${d.dept || "-"}</td>
+            <td>${d.mou || "No"}</td>
+        </tr>
+    `).join("");
+}
+
+// ── 3. SEARCH INPUT HELPER (Optional but recommended) ──
+// Ise Tab Switcher ya Initializer mein add karein
+function setupSearchListener() {
+    const input = document.getElementById("sample-search-input");
+    if (input) {
+        input.addEventListener("input", renderSampleSearch);
+    }
 }
 
 // ══════════════════════════════════════
