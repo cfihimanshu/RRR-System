@@ -11,11 +11,11 @@
 
 <!-- Navbar -->
 <div class="navbar">
-  <div>
-    <div class="logo">RRR Engine</div>
-    <div class="tagline">Live Case Management System</div>
-  </div>
   <button class="btn btn-outline btn-sm nav-toggle" onclick="toggleSidebar()">☰</button>
+  <div class="brand-wrap">
+    <div class="logo">RRR System</div>
+    <div class="tagline">Live case Management system</div>
+  </div>
   <div class="navbar-right">
     <span class="clock" id="clock">--:--:--</span>
     <span id="navbar-case-count">0 cases</span>
@@ -189,6 +189,7 @@
           <option>FIR</option><option>Litigation</option><option>Escalation</option><option>General Query</option><option>Lien</option>
         </select>
       </div>
+      <div class="field"><label class="required">Brand Name</label><input id="nc-brand" placeholder="e.g. Startup / Brand name"></div>
     </div>
 
     <!-- Conditional Complaint Fields -->
@@ -359,6 +360,7 @@
         📥 IMPORT CSV (BULK)
         <input type="file" id="import-csv-input" accept=".csv" style="display:none;" onchange="importCasesCSV(event)">
       </label>
+      <button class="btn btn-outline btn-sm" onclick="downloadCaseImportTemplate()">🧾 Download Import Template</button>
       <button class="btn btn-outline btn-sm" onclick="exportCaseMaster()">⬇ Export CSV</button>
     </div>
   </div>
@@ -366,7 +368,7 @@
     <input id="cm-search" placeholder="🔍 Search by Case ID, Client Name, Status..." oninput="renderCaseMaster()" style="max-width:340px"/>
     <select id="cm-filter-status" onchange="renderCaseMaster()" style="width:140px">
       <option value="">All Status</option>
-      <option>Open</option><option>In Progress</option><option>Settled</option><option>Closed</option>
+      <option>New</option><option>Open</option><option>In Progress</option><option>Settled</option><option>Closed</option>
     </select>
     <select id="cm-filter-priority" onchange="renderCaseMaster()" style="width:130px">
       <option value="">All Priority</option>
@@ -502,7 +504,7 @@
           <div class="field"><label>Update Case Status To</label>
             <select id="al-status">
               <option value="">-- No change --</option>
-              <option>Open</option><option>In Progress</option>
+              <option>New</option><option>Open</option><option>In Progress</option>
               <option>Pending Response</option><option>Settled</option><option>Closed</option>
             </select>
           </div>
@@ -735,18 +737,6 @@
     </div>
   </div>
 
-  <div class="card" id="admin-assignment-card">
-    <div class="card-title">🗂️ Case Assignment Control</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Case</th><th>Assigned To (Email)</th><th>Action</th></tr>
-        </thead>
-        <tbody id="assignment-body"><tr><td colspan="5"><div class="empty-state">No cases available for assignment.</div></td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
   <div class="card">
     <div class="card-title" id="user-create-title">👤 Create New User</div>
     <div class="form-grid">
@@ -817,10 +807,13 @@
 </div>
 
 <div class="modal-bg" id="file-preview-modal">
-  <div class="modal modal-lg">
+  <div class="modal modal-fullscreen">
     <div class="modal-title">
       <span id="file-preview-title">File Preview</span>
-      <button class="close-btn" onclick="closeFilePreview()">✕</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <a id="file-preview-download" class="btn btn-primary btn-sm" href="#" download style="text-decoration:none;">⬇ Download</a>
+        <button class="close-btn" onclick="closeFilePreview()">✕</button>
+      </div>
     </div>
     <div id="file-preview-body"></div>
   </div>

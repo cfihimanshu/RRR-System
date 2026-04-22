@@ -59,6 +59,7 @@ function mergeCollectionByKey(cloudItems, localItems, key) {
 function mergeCollectionsWithLocalBackup() {
   const local = loadLocalBackupDB();
   if (!local) return;
+  DB.cases = mergeCollectionByKey(DB.cases, local.cases, "caseId");
   DB.history = mergeCollectionByKey(DB.history, local.history, "histId");
   DB.actions = mergeCollectionByKey(DB.actions, local.actions, "actionId");
   DB.comms = mergeCollectionByKey(DB.comms, local.comms, "commId");
@@ -131,39 +132,6 @@ async function loadDB() {
   }
 }
 
-// ── 2. SAVE DATA TO CLOUD ONLY ──
-// async function saveDB() {
-//     console.log("🔄 Syncing to Google Sheets...");
-
-//     // RAM data ko local storage mein sirf temporary backup rakhte hain 
-//     // taaki browser crash ho to data na jaye, par main storage Sheet hi rahegi
-//     try { 
-//         localStorage.setItem(LS_KEY, JSON.stringify(DB)); 
-//     } catch(e) { console.warn("Local storage full, using cloud only."); }
-
-//     try {
-//         const controller = new AbortController();
-//         const timeoutId = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
-
-//         await fetch(SCRIPT_URL, { 
-//             method: "POST", 
-//             body: JSON.stringify(DB), 
-//             mode: "no-cors", 
-//             signal: controller.signal 
-//         });
-
-//         clearTimeout(timeoutId);
-//         console.log("✅ Cloud Sync successfully triggered.");
-
-//     } catch(e) {
-//         if (e.name === "AbortError") {
-//             console.warn("Sync slow hai, backend mein process ho raha hoga.");
-//         } else {
-//             console.error("Cloud sync error:", e);
-//             toast("Cloud Sync Fail! Internet check karein.", "error");
-//         }
-//     }
-// }
 
 async function saveDB() {
   console.log("🔄 Syncing to Google Sheets (Cloud Mode)...");
@@ -221,7 +189,6 @@ function refreshAllUI() {
   renderTimeline();
   renderStudyControl();
   renderRefundApprovals();
-  renderAssignmentBoard();
   renderReviewerDashboard();
   renderAccountantDashboard();
   renderSampleSearch(); // Sample Data search refresh karein
@@ -267,11 +234,43 @@ function formatDate(dateInput) {
 
 function uid(prefix) { return prefix + "-" + Date.now() + "-" + Math.floor(Math.random() * 1000); }
 
+function getBrandCode(brandInput) {
+  const cleaned = String(brandInput || "").trim().replace(/[^a-zA-Z0-9\s]/g, " ");
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (!words.length) return "XX";
+  if (words.length === 1) {
+    const one = words[0].toUpperCase();
+    return (one.slice(0, 2) || "XX").padEnd(2, "X");
+  }
+  return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+}
+
 function generateCaseId() {
   const yr = new Date().getFullYear();
-  const nums = DB.cases.map(c => { const p = (c.caseId + "").split("-"); return p.length > 2 ? parseInt(p[2]) : 0; });
+  const brand = document.getElementById("nc-brand") ? document.getElementById("nc-brand").value.trim() : "";
+  const code = getBrandCode(brand);
+  const nums = DB.cases.map(c => {
+    const p = (c.caseId + "").split("-");
+    // Expected: RRR-<CODE>-<YYYY>-<####>
+    if (p.length >= 4 && p[0] === "RRR" && String(p[2]) === String(yr)) return parseInt(p[3], 10) || 0;
+    return 0;
+  });
   const next = nums.length ? Math.max(...nums) + 1 : 1;
-  return `CASE-${yr}-${String(next).padStart(4, "0")}`;
+  return `RRR-${code}-${yr}-${String(next).padStart(4, "0")}`;
+}
+
+function nextSerialForCase(collection, caseId, idField, prefix) {
+  const rows = Array.isArray(collection) ? collection : [];
+  let max = 0;
+  rows.forEach(r => {
+    if (!r || r.caseId !== caseId) return;
+    const id = String(r[idField] || "");
+    if (!id.startsWith(prefix)) return;
+    const parts = id.split("-");
+    const maybe = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(maybe)) max = Math.max(max, maybe);
+  });
+  return max + 1;
 }
 
 function toast(msg, type = "info") {
@@ -351,7 +350,7 @@ document.querySelectorAll(".tab").forEach(tab => {
     else if (tabName === "timeline") safe("renderTimeline");
     else if (tabName === "doc-index") safe("renderDocIndex");
     else if (tabName === "case-study") safe("renderStudyControl");
-    else if (tabName === "admin-panel") { safe("renderRefundApprovals"); safe("renderAssignmentBoard"); safe("setupUserRoleOptions"); }
+    else if (tabName === "admin-panel") { safe("renderRefundApprovals"); safe("setupUserRoleOptions"); }
     else if (tabName === "internal-search") safe("renderSampleSearch");
     else if (tabName === "reviewer-panel") safe("renderReviewerDashboard");
     else if (tabName === "accountant-dashboard") safe("renderAccountantDashboard");
@@ -425,7 +424,7 @@ function formatRefundStatus(status) {
 //  BADGE HELPERS
 // ══════════════════════════════════════
 function statusBadge(s) {
-  const map = { "Open": "open", "Closed": "closed", "Settled": "settled", "In Progress": "pending", "Pending Response": "pending", "Refund Pending Approval": "pending", "Refund Approved": "closed" };
+  const map = { "New": "pending", "Open": "open", "Closed": "closed", "Settled": "settled", "In Progress": "pending", "Pending Response": "pending", "Refund Pending Approval": "pending", "Refund Approved": "closed" };
   return `<span class="badge badge-${map[s] || 'open'}">${s || 'Open'}</span>`;
 }
 function priorityBadge(p) {
@@ -438,10 +437,8 @@ function priorityBadge(p) {
 // ══════════════════════════════════════
 function updateDashboard() {
   normalizeDBShape();
-  const role = currentRole();
-  const userEmail = currentUserEmail();
-  let visibleCases = DB.cases;
-  if (role !== "Admin") visibleCases = DB.cases.filter(c => (c.assignedTo || c.assignedOps || c.initiatedBy || "").toLowerCase() === userEmail);
+  // Dashboard shows overall stats; assignment filtering handled in Case Master
+  const visibleCases = DB.cases;
   document.getElementById("stat-total").textContent = visibleCases.length;
   document.getElementById("stat-open").textContent = visibleCases.filter(c => c.currentStatus === "Open").length;
   renderRefundDashboard();
@@ -493,8 +490,8 @@ function runDailyChecker() {
 // ══════════════════════════════════════
 async function submitNewCase() {
   const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
-  if (!get("nc-company") || !get("nc-title") || !get("nc-client") || !get("nc-summary")) {
-    toast("Required fields missing! (Company, Title, Client, Summary)", "error"); return;
+  if (!get("nc-company") || !get("nc-title") || !get("nc-client") || !get("nc-summary") || !get("nc-brand")) {
+    toast("Required fields missing! (Company, Title, Brand, Client, Summary)", "error"); return;
   }
   try {
     const serviceRows = document.querySelectorAll(".service-row");
@@ -514,6 +511,7 @@ async function submitNewCase() {
       caseId, createdDate,
       companyName: get("nc-company"), caseTitle: get("nc-title"), priority: get("nc-priority"),
       sourceOfComplaint: get("nc-business"), typeOfComplaint: get("nc-complaint-type"),
+      brandName: get("nc-brand"),
       servicesSold: servicesData.join(", "), engagementNote: get("nc-engagement-note"),
       cyberAckNumbers: capturedAcks, firNumber: get("nc-fir-num"),
       firFileLink: document.getElementById("nc-fir-file-data") ? document.getElementById("nc-fir-file-data").value : "",
@@ -525,13 +523,17 @@ async function submitNewCase() {
       caseSummary: get("nc-summary"), clientAllegation: get("nc-allegation"),
       proofCallRec: get("nc-call-rec"), proofWaChat: get("nc-wa-chat"),
       proofVideoCall: get("nc-v-call"), proofFundingEmail: get("nc-funding-email"),
-      initiatedBy: get("nc-lead"), accountable: get("nc-negotiator"),
+      initiatedBy: get("nc-lead") || currentUserEmail(), accountable: get("nc-negotiator"),
       legalOfficer: get("nc-legal"), accounts: get("nc-accounts"),
-      assignedTo: existing ? existing.assignedTo || existing.assignedOps || "" : "",
+      // Default assignment: whoever created the case can see it
+      assignedTo: existing ? (existing.assignedTo || existing.assignedOps || "") : currentUserEmail(),
       assignedOps: existing ? existing.assignedOps || "" : "",
       assignedReviewer: existing ? existing.assignedReviewer || "" : "",
       assignedAccountant: existing ? existing.assignedAccountant || "" : "",
-      currentStatus: "Open", lastUpdateDate: createdDate
+      updatedAtMs: Date.now(),
+      caseCreatedSource: existing ? (existing.caseCreatedSource || "Form") : "Form",
+      currentStatus: existing ? (existing.currentStatus || "New") : "New",
+      lastUpdateDate: createdDate
     };
     if (existing) {
       const idx = DB.cases.findIndex(c => c.caseId === editingCaseId);
@@ -572,6 +574,7 @@ function startCaseEdit(caseId) {
   const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value || ""; };
   set("nc-company", c.companyName); set("nc-title", c.caseTitle); set("nc-priority", c.priority);
   set("nc-business", c.sourceOfComplaint); set("nc-complaint-type", c.typeOfComplaint);
+  set("nc-brand", c.brandName);
   set("nc-fir-num", c.firNumber); set("nc-grievance-num", c.grievanceNumber);
   set("nc-client", c.clientName); set("nc-mobile", c.clientMobile); set("nc-email", c.clientEmail); set("nc-state", c.state);
   set("nc-amtpaid", c.totalAmtPaid); set("nc-mou", c.mouSigned); set("nc-mouval", c.totalMouValue); set("nc-dispute", c.amtInDispute);
@@ -598,9 +601,7 @@ function renderCaseMaster() {
   const role = currentRole();
   const email = currentUserEmail();
   let filtered = DB.cases.filter(c => {
-    const roleMatch = role === "Admin"
-      ? true
-      : ((c.assignedTo || c.assignedOps || c.initiatedBy || "").toLowerCase() === email);
+    const roleMatch = role === "Admin" ? true : true;
     const matchQ = !q || JSON.stringify(c).toLowerCase().includes(q);
     const matchSt = !status || c.currentStatus === status;
     const matchPr = !prio || c.priority === prio;
@@ -616,7 +617,7 @@ function renderCaseMaster() {
         <td>₹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</td>
         <td>${priorityBadge(c.priority)}</td>
         <td>${statusBadge(c.currentStatus)}</td>
-        <td>${c.assignedTo || c.assignedOps || c.initiatedBy || "-"}</td>
+        <td>${c.initiatedBy || "-"}</td>
         <td>${formatDate(c.lastUpdateDate)}</td>
         <td>${formatDate(c.nextActionDate) || "-"}</td>
         <td>
@@ -628,7 +629,7 @@ function renderCaseMaster() {
 
 function exportCaseMaster() {
   if (!DB.cases.length) { toast("No cases to export.", "error"); return; }
-  const headers = ["caseId", "createdDate", "companyName", "caseTitle", "priority", "sourceOfComplaint", "typeOfComplaint", "servicesSold", "clientName", "clientMobile", "clientEmail", "state", "totalAmtPaid", "mouSigned", "totalMouValue", "amtInDispute", "smRisk", "complaint", "policeThreat", "caseSummary", "clientAllegation", "proofCallRec", "proofWaChat", "proofVideoCall", "proofFundingEmail", "initiatedBy", "accountable", "legalOfficer", "accounts", "currentStatus", "lastUpdateDate", "nextActionDate", "cyberAckNumbers", "firNumber", "firFileLink", "grievanceNumber"];
+  const headers = ["caseId", "createdDate", "companyName", "caseTitle", "priority", "sourceOfComplaint", "typeOfComplaint", "brandName", "servicesSold", "engagementNote", "clientName", "clientMobile", "clientEmail", "state", "totalAmtPaid", "mouSigned", "totalMouValue", "amtInDispute", "smRisk", "complaint", "policeThreat", "caseSummary", "clientAllegation", "proofCallRec", "proofWaChat", "proofVideoCall", "proofFundingEmail", "initiatedBy", "accountable", "legalOfficer", "accounts", "caseCreatedSource", "currentStatus", "lastUpdateDate", "nextActionDate", "cyberAckNumbers", "firNumber", "firFileLink", "grievanceNumber"];
   const csv = [headers.join(","), ...DB.cases.map(c => headers.map(h => `"${(c[h] || "").toString().replace(/"/g, '""')}"`).join(","))].join("\n");
   const a = document.createElement("a");
   a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
@@ -655,7 +656,7 @@ function showCaseDetail(caseId) {
           <div><span class="text-muted">Status:</span> ${statusBadge(c.currentStatus)}</div>
           <div><span class="text-muted">Amt Paid:</span> ₹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</div>
           <div><span class="text-muted">Initiated By:</span> ${c.initiatedBy || "-"}</div>
-          <div><span class="text-muted">Assigned To:</span> ${c.assignedTo || c.assignedOps || "-"}</div>
+          <div><span class="text-muted">Assigned To:</span> ${c.initiatedBy || "-"}</div>
         </div>
         <hr class="divider"/>
         <div style="font-weight:600;margin-bottom:8px">Case Summary</div>
@@ -757,24 +758,39 @@ function previewStoredFile(link) {
   const modal = document.getElementById("file-preview-modal");
   const body = document.getElementById("file-preview-body");
   const title = document.getElementById("file-preview-title");
+  const downloadBtn = document.getElementById("file-preview-download");
   if (!modal || !body) return;
   title.textContent = "File Preview";
-  let html = `<div class="preview-meta">Secure in-app preview</div>`;
+  const safeFilename = "file_" + Date.now();
+  const setDownload = (href, filename = safeFilename) => {
+    if (!downloadBtn) return;
+    downloadBtn.href = href || "#";
+    downloadBtn.setAttribute("download", filename);
+    downloadBtn.style.pointerEvents = href ? "auto" : "none";
+    downloadBtn.style.opacity = href ? "1" : "0.5";
+  };
+
+  let html = `<div class="preview-meta">Preview</div><div style="height:calc(92vh - 120px)">`;
   if ((link || "").startsWith("data:image/")) {
+    setDownload(link, safeFilename + ".jpg");
     html += `<img class="preview-img" src="${link}" alt="Preview image">`;
   } else if ((link || "").startsWith("data:")) {
+    setDownload(link, safeFilename);
     html += `<iframe class="preview-media" src="${link}"></iframe>`;
   } else if ((link || "").includes("drive.google.com")) {
     const fileId = getDriveFileId(link);
+    setDownload(fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : "", safeFilename);
     html += fileId
       ? `<img class="preview-img" src="https://drive.google.com/thumbnail?id=${fileId}&sz=w1600" alt="Drive image preview" onerror="this.outerHTML='<iframe class=&quot;preview-media&quot; src=&quot;https://drive.google.com/file/d/${fileId}/preview&quot; allow=&quot;autoplay&quot;></iframe>';">`
       : `<div class="empty-state">Preview unavailable for this Drive file.</div>`;
   } else if ((link || "").match(/\.(png|jpg|jpeg|gif|webp|bmp)(\?|$)/i)) {
+    setDownload(link, safeFilename);
     html += `<img class="preview-img" src="${link}" alt="Preview image">`;
   } else {
+    setDownload(link, safeFilename);
     html += `<iframe class="preview-media" src="${link}"></iframe>`;
   }
-  body.innerHTML = html;
+  body.innerHTML = html + `</div>`;
   modal.classList.add("open");
 }
 function closeFilePreview() { document.getElementById("file-preview-modal").classList.remove("open"); }
@@ -884,7 +900,10 @@ async function submitCommLog() {
   const get = id => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
   const caseId = get("cl-caseid"), summary = get("cl-summary");
   if (!caseId || !summary) { toast("Select Case ID and enter Summary", "error"); return; }
-  const row = { commId: uid("COMM"), caseId, dateTime: get("cl-datetime") || nowIST(), mode: document.getElementById("cl-mode").value, direction: document.getElementById("cl-dir").value, fromTo: get("cl-fromto"), summary, exactDemand: get("cl-exact"), refundDemanded: get("cl-refund"), legalThreat: document.getElementById("cl-legal").value, smMentioned: document.getElementById("cl-sm").value, fileLink: resolveFileLink("cl-file-data", "cl-file"), loggedBy: get("cl-loggedby"), timestamp: nowIST(), updatedAtMs: Date.now() };
+  const mode = document.getElementById("cl-mode").value;
+  const modeSafe = String(mode || "Mode").replace(/\s+/g, "");
+  const sr = nextSerialForCase(DB.comms, caseId, "commId", `COMM-${modeSafe}-RRR-${caseId}-`);
+  const row = { commId: `COMM-${modeSafe}-${caseId}-${sr}`, caseId, dateTime: get("cl-datetime") || nowIST(), mode, direction: document.getElementById("cl-dir").value, fromTo: get("cl-fromto"), summary, exactDemand: get("cl-exact"), refundDemanded: get("cl-refund"), legalThreat: document.getElementById("cl-legal").value, smMentioned: document.getElementById("cl-sm").value, fileLink: resolveFileLink("cl-file-data", "cl-file"), loggedBy: get("cl-loggedby"), timestamp: nowIST(), updatedAtMs: Date.now() };
   DB.comms.push(row);
   addTimelineEntry(caseId, row.dateTime, "COMMUNICATION", `${row.mode} ${row.direction}`, summary);
   updateCaseMasterField(caseId, "lastUpdateDate", nowIST());
@@ -915,7 +934,8 @@ async function submitDocUpload() {
   const get = id => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
   const caseId = get("di-caseid"), fileLink = resolveFileLink("di-file-data", "di-file-url");
   if (!caseId || !fileLink) { toast("Select Case ID and attach a file!", "error"); return; }
-  const docRow = { docId: uid("DOC"), caseId, uploadDate: nowIST(), sourceForm: "MANUAL_UPLOAD", docType: get("di-doctype"), fileSummary: get("di-summary") || get("di-doctype"), fileLink, uploadedBy: get("di-uploadedby"), remarks: get("di-remarks"), updatedAtMs: Date.now() };
+  const sr = nextSerialForCase(DB.docs, caseId, "docId", `DOC-${caseId}-`);
+  const docRow = { docId: `DOC-${caseId}-${sr}`, caseId, uploadDate: nowIST(), sourceForm: "MANUAL_UPLOAD", docType: get("di-doctype"), fileSummary: get("di-summary") || get("di-doctype"), fileLink, uploadedBy: get("di-uploadedby"), remarks: get("di-remarks"), updatedAtMs: Date.now() };
   DB.docs.push(docRow);
   addTimelineEntry(caseId, nowIST(), "DOCUMENT", docRow.docType, "Manual Upload: " + docRow.fileSummary);
   renderDocIndex();
@@ -980,6 +1000,7 @@ async function generateCaseStudy() {
         <table class="cs-table"><tr><th colspan="2">CASE OVERVIEW</th></tr>
           <tr><td class="cs-label">Case ID</td><td>${c.caseId}</td></tr>
           <tr><td class="cs-label">Created</td><td>${c.createdDate}</td></tr>
+          <tr><td class="cs-label">Brand Name</td><td>${c.brandName || "-"}</td></tr>
           <tr><td class="cs-label">Company</td><td>${c.companyName}</td></tr>
           <tr><td class="cs-label">Case Title</td><td>${c.caseTitle}</td></tr>
           <tr><td class="cs-label">Client</td><td>${c.clientName}</td></tr>
@@ -987,6 +1008,7 @@ async function generateCaseStudy() {
           <tr><td class="cs-label">Email</td><td>${c.clientEmail || "-"}</td></tr>
           <tr><td class="cs-label">State</td><td>${c.state || "-"}</td></tr>
           <tr><td class="cs-label">Services</td><td>${c.servicesSold || "-"}</td></tr>
+          <tr><td class="cs-label">Engagement Note</td><td>${c.engagementNote || "-"}</td></tr>
           <tr><td class="cs-label">Amount Paid</td><td>₹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</td></tr>
           <tr><td class="cs-label">Amount in Dispute</td><td>₹${Number(c.amtInDispute || 0).toLocaleString("en-IN")}</td></tr>
           <tr><td class="cs-label">MOU Signed</td><td>${c.mouSigned}</td></tr>
@@ -1133,7 +1155,6 @@ function applyPermissions() {
   const refundCard = document.getElementById("refund-dashboard-card"); if (refundCard) refundCard.style.display = "";
   const refundRequestCard = document.getElementById("refund-request-card"); if (refundRequestCard) refundRequestCard.style.display = canRaiseRefundRequest() ? "" : " none";
   const adminRefundCard = document.getElementById("admin-refund-card"); if (adminRefundCard) adminRefundCard.style.display = role === "Admin" ? "" : " none";
-  const assignmentCard = document.getElementById("admin-assignment-card"); if (assignmentCard) assignmentCard.style.display = role === "Admin" ? "" : "none";
   const adminTab = document.querySelector('[data-tab="admin-panel"]'); if (adminTab) adminTab.textContent = role === "Admin" ? "⚙️ Admin Panel" : "⚙️ User Panel";
   const adminTitle = document.getElementById("admin-panel-title"); if (adminTitle) adminTitle.textContent = role === "Admin" ? "Admin Panel" : "Operations User Panel";
   const adminSub = document.getElementById("admin-panel-subtitle"); if (adminSub) adminSub.textContent = role === "Admin" ? "Approve refunds and create users" : "Create staff users and track refund requests";
@@ -1154,42 +1175,7 @@ function setupUserRoleOptions() {
   else if (isOperations()) { roleSelect.innerHTML = `<option>Staff</option>`; if (title) title.textContent = "👤 Create New Staff User"; }
 }
 
-function renderAssignmentBoard() {
-  const body = document.getElementById("assignment-body");
-  if (!body) return;
-  normalizeDBShape();
-  if (!isAdmin()) {
-    body.innerHTML = `<tr><td colspan="3"><div class="empty-state">Only admin can manage assignments.</div></td></tr>`;
-    return;
-  }
-  if (!DB.cases.length) {
-    body.innerHTML = `<tr><td colspan="3"><div class="empty-state">No cases available for assignment.</div></td></tr>`;
-    return;
-  }
-  body.innerHTML = DB.cases.slice().reverse().map(c => `
-    <tr>
-      <td><strong>${c.caseId}</strong><br><span class="text-muted">${c.clientName || "-"}</span></td>
-      <td><input class="assignment-input" id="asg-user-${c.caseId}" value="${c.assignedTo || c.assignedOps || c.initiatedBy || ""}" placeholder="user email"></td>
-      <td><button class="btn btn-primary btn-sm" onclick="saveCaseAssignment('${c.caseId}')">Save</button></td>
-    </tr>
-  `).join("");
-}
-
-async function saveCaseAssignment(caseId) {
-  const c = DB.cases.find(x => x.caseId === caseId);
-  if (!c) { toast("Case not found.", "error"); return; }
-  const assignedEmail = (document.getElementById(`asg-user-${caseId}`)?.value || "").trim().toLowerCase();
-  c.assignedTo = assignedEmail;
-  c.assignedOps = assignedEmail; // backward compatibility
-  c.assignedReviewer = "";
-  c.assignedAccountant = "";
-  c.lastUpdateDate = nowIST();
-  addTimelineEntry(caseId, nowIST(), "ACTION", "Assignment Updated", `Assigned to: ${assignedEmail || "-"}`);
-  logActivity("ASSIGNMENT", `Assignments updated for ${caseId}`, caseId);
-  refreshAllUI();
-  toast("Case assignment saved.", "success");
-  await saveDB();
-}
+// Case Assignment Control removed (assignment shown via Initiated By in Case Master)
 
 // ══════════════════════════════════════
 //  REFUND SYSTEM
@@ -1202,43 +1188,7 @@ function refundAmountSummary(action) {
   if (!amountText) return summary;
   return `${amountText}<br><span class="text-muted" style="font-size:11px">${summary}</span>`;
 }
-// async function submitRefundRequest() {
-//     if (!canRaiseRefundRequest()) { toast("Only Admin or Operations can raise a refund request.", "error"); return; }
-//     const caseId=document.getElementById("rr-caseid").value;
-//     const amount=document.getElementById("rr-amount").value.trim();
-//     const summary=document.getElementById("rr-summary").value.trim();
-//     const requestedBy=document.getElementById("rr-requestedby").value.trim()||currentUserEmail();
-//     if (!caseId||!amount||!summary) { toast("Please select Case ID, enter refund amount, and write summary.", "error"); return; }
-//     if (Number(amount)<=0) { toast("Refund amount must be greater than 0.", "error"); return; }
-//     normalizeDBShape();
-//     const createdAt=nowIST();
-//     const formattedAmount=Number(amount).toLocaleString("en-IN");
-//     const row={actionId:uid("ACT"),caseId,dateTime:createdAt,dept:"Operations",doneBy:requestedBy,actionType:"Refund Request",summary:`Refund request for Rs. ${formattedAmount}`,notes:summary,refundAmount:amount,clientResp:"",observation:"",nextAction:"Admin approval required",nextActionBy:"Admin",nextActionDate:"",fileLink:"",status:"Pending Approval",refundStatus:"Pending Approval",requestedByEmail:currentUserEmail(),requestedByRole:currentRole(),requestedAt:createdAt};
-//     DB.actions.push(row);
-//     addTimelineEntry(caseId,createdAt,"ACTION","Refund Request",`Refund request submitted: Rs. ${formattedAmount} - ${summary}`);
-//     logActivity("REFUND",`Refund request submitted for Rs. ${formattedAmount}`,caseId);
-//     updateCaseMasterField(caseId,"lastUpdateDate",createdAt);
-//     updateCaseMasterField(caseId,"currentStatus","Refund Pending Approval");
-//     renderActionTable(); renderRefundApprovals(); renderRefundDashboard(); updateDashboard();
-//     ["rr-amount","rr-summary","rr-requestedby"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-//     document.getElementById("rr-caseid").value="";
-//     toast("Refund request sent to Admin for approval.", "success");
-//     await saveDB();
-// }
-// function renderRefundApprovals() {
-//     const body=document.getElementById("refund-body"); if(!body) return;
-//     if (!isAdmin()) { body.innerHTML=`<tr><td colspan="5"><div class="empty-state">Only Admin can approve refunds.</div></td></tr>`; return; }
-//     normalizeDBShape();
-//     const pending=DB.actions.filter(a=>a.actionType==="Refund Request"&&(a.refundStatus||a.status||"Pending Approval")!=="Approved");
-//     if (!pending.length) { body.innerHTML=`<tr><td colspan="5"><div class="empty-state">No pending refund approvals.</div></td></tr>`; return; }
-//     body.innerHTML=pending.slice().reverse().map(a=>`<tr>
-//         <td><span class="case-id-display">${a.caseId}</span></td>
-//         <td>${refundAmountSummary(a)}</td>
-//         <td>${refundRequesterLabel(a)}</td>
-//         <td>${a.requestedAt||a.dateTime||"-"}</td>
-//         <td><button class="btn btn-success btn-sm" onclick="approveRefund('${a.actionId}')">Approve</button></td>
-//     </tr>`).join("");
-// }
+
 
 // 1. Submit Detailed Refund Request
 async function submitRefundRequest() {
@@ -1390,12 +1340,78 @@ async function importCasesCSV(event) {
   const reader = new FileReader();
   reader.onload = async function (e) {
     const lines = e.target.result.split(/\r?\n/);
+    if (lines.length < 2) { toast("CSV file is empty.", "error"); return; }
+
+    const splitCsvLine = (line) => line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+    const clean = (v) => v ? v.replace(/^"|"$/g, "").trim() : "";
+    const normalizeHeader = (h) => clean(h).toLowerCase().replace(/[^a-z0-9]/g, "");
+    const toNumberOrZero = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? String(n) : "0";
+    };
+
+    const headers = splitCsvLine(lines[0]).map(normalizeHeader);
+    const idx = {};
+    headers.forEach((h, i) => { idx[h] = i; });
+    const getCol = (cols, ...names) => {
+      for (const n of names) {
+        if (typeof idx[n] === "number") return clean(cols[idx[n]]);
+      }
+      return "";
+    };
+
     let count = 0;
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
-      const col = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-      const clean = v => v ? v.replace(/^"|"$/g, "").trim() : "";
-      const row = { caseId: clean(col[0]) || generateCaseId(), createdDate: clean(col[1]) || nowIST(), companyName: clean(col[2]), caseTitle: clean(col[3]), priority: clean(col[4]), sourceOfComplaint: clean(col[5]), typeOfComplaint: clean(col[6]), servicesSold: clean(col[7]), clientName: clean(col[8]), clientMobile: clean(col[9]), clientEmail: clean(col[10]), state: clean(col[11]), totalAmtPaid: clean(col[12]) || "0", mouSigned: clean(col[13]), totalMouValue: clean(col[14]) || "0", amtInDispute: clean(col[15]) || "0", smRisk: clean(col[16]), complaint: clean(col[17]), policeThreat: clean(col[18]), caseSummary: clean(col[19]), clientAllegation: clean(col[20]), proofCallRec: clean(col[21]), proofWaChat: clean(col[22]), proofVideoCall: clean(col[23]), proofFundingEmail: clean(col[24]), initiatedBy: clean(col[25]), accountable: clean(col[26]), legalOfficer: clean(col[27]), accounts: clean(col[28]), currentStatus: clean(col[29]) || "Open", lastUpdateDate: clean(col[30]) || nowIST(), nextActionDate: clean(col[31]), cyberAckNumbers: clean(col[32]), firNumber: clean(col[33]), firFileLink: clean(col[34]), grievanceNumber: clean(col[35]) };
+      const col = splitCsvLine(lines[i]);
+      const sourceOfComplaint = getCol(col, "sourceofcomplaint", "source");
+      const typeOfComplaint = getCol(col, "typeofcomplaint", "complainttype");
+      const companyName = getCol(col, "companyname", "company");
+      const brandName = getCol(col, "brandname", "brand");
+      const row = {
+        caseId: getCol(col, "caseid") || generateCaseId(),
+        createdDate: getCol(col, "createddate") || nowIST(),
+        companyName,
+        caseTitle: getCol(col, "casetitle") || `${typeOfComplaint || "Case"} - ${companyName || brandName || "Client"}`,
+        priority: getCol(col, "priority") || "Medium",
+        sourceOfComplaint,
+        typeOfComplaint,
+        brandName,
+        servicesSold: getCol(col, "servicessold", "services"),
+        engagementNote: getCol(col, "engagementnote"),
+        clientName: getCol(col, "clientname"),
+        clientMobile: getCol(col, "mobile", "clientmobile"),
+        clientEmail: getCol(col, "email", "clientemail"),
+        state: getCol(col, "state"),
+        totalAmtPaid: toNumberOrZero(getCol(col, "amountpaid", "totalamtpaid")),
+        mouSigned: getCol(col, "mousigned") || "No",
+        totalMouValue: toNumberOrZero(getCol(col, "mouvalue", "totalmouvalue")),
+        amtInDispute: toNumberOrZero(getCol(col, "disputeamount", "amtindispute")),
+        smRisk: getCol(col, "smrisk"),
+        complaint: getCol(col, "consumercomplaint", "complaint"),
+        policeThreat: getCol(col, "policethreat"),
+        caseSummary: getCol(col, "casesummary", "summary"),
+        clientAllegation: getCol(col, "clientallegation"),
+        proofCallRec: getCol(col, "proofcallrec"),
+        proofWaChat: getCol(col, "proofwachat"),
+        proofVideoCall: getCol(col, "proofvideocall"),
+        proofFundingEmail: getCol(col, "prooffundingemail"),
+        initiatedBy: getCol(col, "initiatedby") || currentUserEmail(),
+        accountable: getCol(col, "accountable"),
+        legalOfficer: getCol(col, "legalofficer"),
+        accounts: getCol(col, "accounts"),
+        caseCreatedSource: "CSV",
+        currentStatus: "New",
+        lastUpdateDate: nowIST(),
+        nextActionDate: getCol(col, "nextactiondate"),
+        cyberAckNumbers: getCol(col, "cyberacknumbers"),
+        firNumber: getCol(col, "firnumber"),
+        firFileLink: getCol(col, "firfilelink"),
+        grievanceNumber: getCol(col, "grievancenumber"),
+        assignedTo: getCol(col, "assignedto") || getCol(col, "initiatedby") || currentUserEmail(),
+        updatedAtMs: Date.now()
+      };
+
       DB.cases.push(row);
       addTimelineEntry(row.caseId, row.createdDate, "CASE_CREATION", "Imported", "Bulk import via CSV");
       count++;
@@ -1405,6 +1421,42 @@ async function importCasesCSV(event) {
   };
   reader.readAsText(file);
   event.target.value = "";
+}
+
+function downloadCaseImportTemplate() {
+  const headers = [
+    "caseId", "companyName", "brandName", "typeOfComplaint", "sourceOfComplaint", "priority",
+    "clientName", "mobile", "email", "state", "amountPaid", "mouSigned", "mouValue", "disputeAmount",
+    "summary", "initiatedBy", "servicesSold", "engagementNote", "nextActionDate", "assignedTo"
+  ];
+  const sample = [
+    "",
+    "Startup Kare Pvt Ltd",
+    "Startup Kare",
+    "Legal Notice",
+    "Call",
+    "Medium",
+    "Rohit Kumar",
+    "9876543210",
+    "rohit@example.com",
+    "Rajasthan",
+    "25000",
+    "No",
+    "0",
+    "25000",
+    "Client requested legal support regarding service dispute.",
+    "",
+    "Legal Advisory",
+    "This is a stage-wise engagement.",
+    "",
+    ""
+  ];
+  const csv = [headers.join(","), sample.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")].join("\n");
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  a.download = "Case_Import_Template.csv";
+  a.click();
+  toast("CSV template downloaded.", "success");
 }
 
 // ══════════════════════════════════════
