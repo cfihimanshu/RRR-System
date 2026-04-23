@@ -40,6 +40,11 @@
   <div class="tab" data-tab="internal-search">🔎 Data Search</div>
   <div class="tab" data-tab="reviewer-panel">🧾 Reviewer Dashboard</div>
   <div class="tab" data-tab="accountant-dashboard">💰 Accountant Dashboard</div>
+  <div class="sidebar-actions">
+    <div class="sidebar-case-count" id="sidebar-case-count">0 cases</div>
+    <button class="btn btn-outline btn-sm sidebar-btn" onclick="clearAppCache()">🧹 Clear Cache</button>
+    <button class="btn btn-danger btn-sm sidebar-btn" onclick="logout()">🚪 Logout</button>
+  </div>
 </div>
 <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
 

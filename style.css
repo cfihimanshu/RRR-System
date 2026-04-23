@@ -35,6 +35,25 @@
   .tab:hover { color: #fff; background: rgba(255,255,255,.1); }
   .tab.active { color: #fff; font-weight: 600; border-left-color: #60a5fa; background: rgba(59,130,246,.25); }
 
+  .sidebar-actions {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,.12);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sidebar-case-count {
+    color: #dbeafe;
+    font-size: 12px;
+    background: rgba(59,130,246,.25);
+    border: 1px solid rgba(147,197,253,.35);
+    border-radius: 8px;
+    padding: 7px 10px;
+    text-align: center;
+  }
+  .sidebar-btn { width: 100%; justify-content: center; }
+
   /* ── Main layout ── */
   .main { padding: 20px; max-width: 1400px; margin: 0 0 0 250px; }
 
@@ -42,10 +61,86 @@
   @media (max-width: 768px) {
     .nav-toggle { display: inline-flex !important; }
     .navbar { padding: 0 12px; gap: 10px; }
+    .brand-wrap .tagline { display: none; }
+    .navbar-right .btn, .navbar-right #navbar-case-count { display: none; }
+    .navbar-right { margin-left: auto; }
+    .clock { padding: 3px 10px; font-size: 11px; }
     .tabs { transform: translateX(-100%); transition: transform .25s ease; width: 270px; z-index: 120; }
     .tabs.open { transform: translateX(0); }
     #sidebar-overlay.open { display: block; position: fixed; inset: 56px 0 0 0; background: rgba(0,0,0,.35); z-index: 110; }
     .main { margin-left: 0; padding: 16px; }
+    .card { padding: 14px; }
+    .section-title { font-size: 16px; }
+    th, td { padding: 8px 9px; font-size: 12px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Refund form: mobile column layout */
+    #refund-request-card .form-grid,
+    #refund-request-card .form-grid.cols3 {
+      grid-template-columns: 1fr !important;
+      gap: 10px;
+    }
+    #refund-request-card .field.span2,
+    #refund-request-card .field.span3 {
+      grid-column: span 1 !important;
+    }
+
+    /* History / Action / Communication / Case Study two-column pages -> single column */
+    #tab-history .row,
+    #tab-action-log .row,
+    #tab-comm-log .row,
+    #tab-case-study .row {
+      flex-direction: column;
+    }
+    #tab-history .col,
+    #tab-action-log .col,
+    #tab-comm-log .col,
+    #tab-case-study .col {
+      min-width: 100%;
+      max-width: 100% !important;
+    }
+
+    /* Form sections in these modules -> single column mobile */
+    #tab-history .form-grid,
+    #tab-history .form-grid.cols3,
+    #tab-action-log .form-grid,
+    #tab-action-log .form-grid.cols3,
+    #tab-comm-log .form-grid,
+    #tab-comm-log .form-grid.cols3,
+    #tab-doc-index .form-grid,
+    #tab-doc-index .form-grid.cols3 {
+      grid-template-columns: 1fr !important;
+    }
+    #tab-history .field.span2,
+    #tab-history .field.span3,
+    #tab-action-log .field.span2,
+    #tab-action-log .field.span3,
+    #tab-comm-log .field.span2,
+    #tab-comm-log .field.span3,
+    #tab-doc-index .field.span2,
+    #tab-doc-index .field.span3 {
+      grid-column: span 1 !important;
+    }
+
+    /* Case Study controls and preview spacing */
+    #tab-case-study .btn-row { width: 100%; }
+    #tab-case-study .btn-row .btn { width: 100%; justify-content: center; }
+
+    /* Better touch spacing for all module form controls */
+    #tab-history input, #tab-history select, #tab-history textarea,
+    #tab-action-log input, #tab-action-log select, #tab-action-log textarea,
+    #tab-comm-log input, #tab-comm-log select, #tab-comm-log textarea,
+    #tab-doc-index input, #tab-doc-index select, #tab-doc-index textarea,
+    #refund-request-card input, #refund-request-card select, #refund-request-card textarea {
+      min-height: 40px;
+    }
+    #tab-history textarea,
+    #tab-action-log textarea,
+    #tab-comm-log textarea,
+    #tab-doc-index textarea,
+    #refund-request-card textarea {
+      min-height: 80px;
+    }
   }
   .section {
     display: none !important; /* Pehle sab hide karo */
@@ -63,7 +158,7 @@
 
   /* ── Stat tiles ── */
   .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .stat { background: var(--white); border: 1px solid #e7ebf0; border-radius: var(--radius-lg); padding: 16px; text-align: center; box-shadow: 0 4px 12px rgba(15, 23, 42, .04); }
+  .stat { background: linear-gradient(160deg, #ffffff 0%, #f6f9ff 100%); border: 1px solid #d9e3f7; border-radius: var(--radius-lg); padding: 16px; text-align: center; box-shadow: 0 8px 22px rgba(15, 23, 42, .06); }
   .stat .val { font-size: 28px; font-weight: 700; line-height: 1; }
   .stat .lbl { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
   .stat.blue .val { color: var(--blue); }

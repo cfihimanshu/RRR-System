@@ -287,6 +287,8 @@ function toast(msg, type = "info") {
 function refreshNavCount() {
   const el = document.getElementById("navbar-case-count");
   if (el) el.textContent = (DB.cases ? DB.cases.length : 0) + " case" + (DB.cases.length !== 1 ? "s" : "");
+  const side = document.getElementById("sidebar-case-count");
+  if (side) side.textContent = (DB.cases ? DB.cases.length : 0) + " case" + (DB.cases.length !== 1 ? "s" : "");
 }
 
 function visibleCasesForCurrentUser() {
@@ -1192,7 +1194,7 @@ function autoGenerateTitle() {
 //  PERMISSIONS
 // ══════════════════════════════════════
 function allowedTabsForRole(role) {
-  if (role === "Admin") return ["dashboard", "new-case", "case-master", "history", "action-log", "comm-log", "timeline", "doc-index", "case-study", "admin-panel", "internal-search", "reviewer-panel"];
+  if (role === "Admin") return ["dashboard", "new-case", "case-master", "history", "action-log", "comm-log", "timeline", "doc-index", "case-study", "admin-panel", "internal-search", "reviewer-panel","accountant-dashboard"];
 
   if (role === "Accountant") return ["dashboard", "accountant-dashboard", "internal-search", "doc-index"];
 
