@@ -47,6 +47,9 @@
     <div class="tab" data-tab="accountant-dashboard"><i data-lucide="indian-rupee"></i> <span>Accountant
         Dashboard</span></div>
     <div class="tab" data-tab="agreement-module"><i data-lucide="file-signature"></i> <span>Agreement</span></div>
+    <div class="tab" data-tab="my-tasks"><i data-lucide="check-square"></i> <span>My Tasks</span></div>
+    <div class="tab" data-tab="reports-log"><i data-lucide="file-text"></i> <span>SOD/EOD Reports</span></div>
+    <div class="tab" data-tab="work-report"><i data-lucide="trending-up"></i> <span>Work Report</span></div>
     <div class="sidebar-actions">
       <div class="sidebar-case-count" id="sidebar-case-count">0 cases</div>
       <div class="sidebar-action-card">
@@ -68,6 +71,10 @@
         <div>
           <div class="section-title">Dashboard</div>
           <div class="section-sub" id="dash-last-check">Last checked: never</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" onclick="openSODModal()"><i data-lucide="clipboard-list"></i> Fill SOD</button>
+          <button class="btn btn-outline" onclick="openEODModal()" style="background:#fff8f1; border-color:#fdba74; color:#9a3412;"><i data-lucide="moon"></i> Fill EOD</button>
         </div>
       </div>
 
@@ -632,8 +639,9 @@
           <span id="cm-selected-count" style="font-weight:700; color:#0056b3;">0 cases selected</span>
           <div style="height:24px; border-right:1px solid #c0d7ef;"></div>
           <label style="font-size:13px; font-weight:600;">Bulk Assign to Email:</label>
-          <input id="cm-bulk-assign-email" placeholder="staff@example.com"
-            style="max-width:240px; padding:6px 12px; font-size:13px;" />
+          <select id="cm-bulk-assign-email" style="max-width:240px; padding:6px 12px; font-size:13px;">
+            <option value="">-- Select Staff --</option>
+          </select>
           <button class="btn btn-primary btn-sm" onclick="bulkAssignCases()">Apply to Selected</button>
         </div>
       </div>
@@ -1351,6 +1359,103 @@
     </div>
     <!-- ══════════════ /AGREEMENT MODULE ══════════════ -->
 
+    <!-- ══════════════ 13. MY TASKS ══════════════ -->
+    <div id="tab-my-tasks" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Task Board</div>
+          <div class="section-sub">Manage your daily tasks and progress</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <select id="task-filter-user" class="admin-only" onchange="renderTaskBoard()" style="width:180px; padding:7px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px;">
+            <option value="">All Users</option>
+          </select>
+          <button class="btn btn-outline" onclick="importMyAssignedCases()"><i data-lucide="download-cloud"></i> Import My Cases</button>
+          <button class="btn btn-primary" onclick="openNewTaskModal()"><i data-lucide="plus"></i> New Task</button>
+        </div>
+      </div>
+      <div class="task-board" id="task-board-container">
+        <div class="task-col" id="col-todo">
+          <div class="task-col-header">
+            <div class="task-col-title"><div class="col-dot dot-todo"></div>To Do</div>
+            <span class="badge" id="count-todo">0</span>
+          </div>
+          <div class="task-list" id="list-todo" ondrop="dropTask(event, 'todo')" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="task-col" id="col-inprogress">
+          <div class="task-col-header">
+            <div class="task-col-title"><div class="col-dot dot-inprogress"></div>In Progress</div>
+            <span class="badge" id="count-inprogress">0</span>
+          </div>
+          <div class="task-list" id="list-inprogress" ondrop="dropTask(event, 'inprogress')" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="task-col" id="col-done">
+          <div class="task-col-header">
+            <div class="task-col-title"><div class="col-dot dot-done"></div>Completed</div>
+            <span class="badge" id="count-done">0</span>
+          </div>
+          <div class="task-list" id="list-done" ondrop="dropTask(event, 'done')" ondragover="allowDrop(event)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ 14. SOD/EOD REPORTS ══════════════ -->
+    <div id="tab-reports-log" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">SOD / EOD Reports</div>
+          <div class="section-sub">Daily check-in and check-out records</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="reports-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>User</th>
+                <th>Time</th>
+                <th>Summary</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="reports-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ 15. WORK REPORT ══════════════ -->
+    <div id="tab-work-report" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Work Report</div>
+          <div class="section-sub">Aggregated productivity metrics</div>
+        </div>
+        <button class="btn btn-outline" onclick="exportWorkReport()"><i data-lucide="download"></i> Export CSV</button>
+      </div>
+      <div class="stats-grid" id="work-report-stats"></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="work-log-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>SOD Time</th>
+                <th>EOD Time</th>
+                <th>Hours</th>
+                <th>Tasks Done</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody id="work-log-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 
   <!-- Case detail modal -->
@@ -1384,6 +1489,178 @@
 
   <!-- Toast container -->
   <div id="toast"></div>
+
+  <!-- 🌅 Start of Day (SOD) Modal -->
+  <div class="modal-overlay hidden" id="sodModal">
+    <div class="modal-box">
+      <div class="modal-title">🌅 Start of Day — <span style="color:var(--primary);">SOD Report</span></div>
+      <div class="modal-desc" id="sodDateLabel"></div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="sod-name" readonly>
+        </div>
+        <div class="field">
+          <label>Check-In Time</label>
+          <input type="time" id="sod-checkin">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Today's Planned Tasks</label>
+          <textarea id="sod-planned" placeholder="List what you plan to accomplish today..."></textarea>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Priority Focus Areas</label>
+          <input type="text" id="sod-priority" placeholder="e.g. Case RRR-042, Refund follow-up...">
+        </div>
+      </div>
+      <div style="margin-top:20px; padding:15px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+        <div style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:10px;">📋 My Tasks Today</div>
+        <div id="sod-task-checklist" style="max-height:150px; overflow-y:auto;"></div>
+      </div>
+      <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn btn-outline" onclick="closeSODModal()">Skip for Now</button>
+        <button class="btn btn-primary" onclick="submitSOD()">Submit SOD & Start Work</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🌙 End of Day (EOD) Modal -->
+  <div class="modal-overlay hidden" id="eodModal">
+    <div class="modal-box">
+      <div class="modal-title">🌙 End of Day — <span style="color:var(--primary);">EOD Report</span></div>
+      <div class="modal-desc">Please summarize your work before logging out.</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Check-Out Time</label>
+          <input type="time" id="eod-checkout">
+        </div>
+        <div class="field" style="display:flex; align-items:center;">
+          <div style="padding:10px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; width:100%; font-size:13px; color:#0369a1; text-align:center;">
+            <strong>⏱ Total Work Duration:</strong> <span id="eod-hours-display" style="font-weight:700;">0.0</span> hrs
+            <input type="hidden" id="eod-hours" value="0">
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:15px; margin-bottom:15px;">
+        <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:8px;">Task Completion Status</label>
+        <div id="eod-task-checklist" style="max-height:150px; overflow-y:auto;"></div>
+      </div>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Work Summary</label>
+          <textarea id="eod-summary" placeholder="What did you accomplish today?"></textarea>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Progress Score (1-10)</label>
+          <input type="number" id="eod-score" min="1" max="10">
+        </div>
+        <div class="field">
+          <label>Mood / Energy</label>
+          <select id="eod-mood">
+            <option>😊 Great</option>
+            <option>😐 Average</option>
+            <option>😓 Tired</option>
+            <option>🔥 Productive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn btn-outline" onclick="closeEODModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitEOD()">Submit EOD Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ➕ New Task Modal -->
+  <div class="modal-overlay hidden" id="newTaskModal">
+    <div class="modal-box" style="max-width:500px;">
+      <div class="modal-title">➕ Create <span style="color:var(--primary);">New Task</span></div>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Task Title</label>
+          <input type="text" id="nt-title" placeholder="Task name...">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Priority</label>
+          <select id="nt-priority">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Assign To</label>
+          <select id="nt-assignee"></select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" id="nt-due">
+        </div>
+        <div class="field">
+          <label>Case ID (Optional)</label>
+          <input type="text" id="nt-caseid" placeholder="e.g. RRR-001">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Task Details</label>
+          <textarea id="nt-details" placeholder="Describe the task..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn btn-outline" onclick="closeNewTaskModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="createManualTask()">Create Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📝 Task Detail Drawer -->
+  <div class="drawer-overlay hidden" id="taskDrawerOverlay" onclick="closeTaskDrawer()"></div>
+  <div class="drawer" id="taskDrawer">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+      <div>
+        <div style="font-size:11px; color:var(--muted); margin-bottom:4px;" id="dr-task-id"></div>
+        <div style="font-size:18px; font-weight:700;" id="dr-task-title"></div>
+      </div>
+      <button class="close-btn" onclick="closeTaskDrawer()"><i data-lucide="x"></i></button>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Status</label>
+      <div class="status-btns">
+        <button class="status-btn s-todo" onclick="updateTaskStatus('todo')">To Do</button>
+        <button class="status-btn s-inprogress" onclick="updateTaskStatus('inprogress')">In Progress</button>
+        <button class="status-btn s-done" onclick="updateTaskStatus('done')">Done</button>
+      </div>
+    </div>
+    <div id="dr-task-meta" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Priority</label><div id="dr-priority" style="font-size:13px; font-weight:600;"></div></div>
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Assignee</label><div id="dr-assignee" style="font-size:13px; font-weight:600;"></div></div>
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Due Date</label><input type="date" id="dr-due-input" style="width:100%; border:1px solid #e2e8f0; border-radius:4px; font-size:12px; padding:4px;"></div>
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Case ID</label><div id="dr-caseid" style="font-size:13px; font-weight:600;"></div></div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Details</label>
+      <div id="dr-details" style="font-size:13px; line-height:1.6; color:#334155; background:#f8fafc; padding:12px; border-radius:8px;"></div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Notes</label>
+      <textarea id="dr-notes" style="width:100%; min-height:100px; font-size:13px; border-radius:8px; border:1px solid #e2e8f0;" placeholder="Add private notes here..."></textarea>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="saveTaskDrawer()">Save Changes</button>
+      <button class="btn btn-outline" style="color:#ef4444;" onclick="deleteTask()"><i data-lucide="trash-2"></i></button>
+    </div>
+  </div>
 
   <!-- Excel Support -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>

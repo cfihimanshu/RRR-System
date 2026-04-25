@@ -20,12 +20,12 @@ const LS_KEY = "RRR_DB_v1";
 const SAMPLE_DATA_KEY = "RRR_SAMPLE_DATA_v1";
 const CLOUD_TIMEOUT_MS = 90000;
 
-let DB = { cases: [], history: [], actions: [], comms: [], docs: [], timeline: [], studyControl: [], sampleData: [], auditLogs: [], refunds: [] };
+let DB = { cases: [], history: [], actions: [], comms: [], docs: [], timeline: [], studyControl: [], sampleData: [], auditLogs: [], refunds: [], tasks: [], sod: [], eod: [], agreements: [] };
 let editingCaseId = null;
 
 function normalizeDBShape() {
   DB = DB || {};
-  ["cases", "history", "actions", "comms", "docs", "timeline", "studyControl", "sampleData", "auditLogs", "refunds"].forEach(key => {
+  ["cases", "history", "actions", "comms", "docs", "timeline", "studyControl", "sampleData", "auditLogs", "refunds", "tasks", "sod", "eod", "agreements"].forEach(key => {
     if (!Array.isArray(DB[key])) DB[key] = [];
   });
 }
@@ -185,6 +185,7 @@ function refreshAllUI() {
   refreshAssigneeFilter();
   refreshNavCount();
   renderCaseMaster();
+  refreshTaskUserFilter();
   renderHistoryTable();
   renderActionTable();
   renderCommTable();
@@ -196,6 +197,9 @@ function refreshAllUI() {
   renderAccountantDashboard();
   renderSampleSearch(); // Sample Data search refresh karein
   renderRefundDashboard();
+  renderTaskBoard();
+  renderReportsLog();
+  renderWorkReport();
   applyPermissions();
 
   // Initialize Lucide Icons
@@ -314,6 +318,27 @@ function refreshNavCount() {
   if (el) el.textContent = (DB.cases ? DB.cases.length : 0) + " case" + (DB.cases.length !== 1 ? "s" : "");
   const side = document.getElementById("sidebar-case-count");
   if (side) side.textContent = (DB.cases ? DB.cases.length : 0) + " case" + (DB.cases.length !== 1 ? "s" : "");
+}
+
+function getUsersList() {
+  const users = new Set();
+  DB.cases.forEach(c => {
+    if (c.assignedTo) users.add(c.assignedTo.trim().toLowerCase());
+    if (c.initiatedBy) users.add(c.initiatedBy.trim().toLowerCase());
+  });
+  // Add current user too
+  const cur = currentUserEmail();
+  if (cur) users.add(cur);
+  return Array.from(users).filter(v => v && v.includes("@")).sort();
+}
+
+function refreshTaskUserFilter() {
+  const el = document.getElementById("task-filter-user");
+  if (!el) return;
+  const users = getUsersList();
+  const cur = el.value;
+  el.innerHTML = '<option value="">All Users</option>' + users.map(u => `<option value="${u}">${u}</option>`).join("");
+  el.value = cur;
 }
 
 function visibleCasesForCurrentUser() {
@@ -445,6 +470,9 @@ window.switchTab = function (tabName, skipHistory = false) {
   else if (tabName === "internal-search") safe("renderSampleSearch");
   else if (tabName === "reviewer-panel") safe("renderReviewerDashboard");
   else if (tabName === "accountant-dashboard") safe("renderAccountantDashboard");
+  else if (tabName === "my-tasks") safe("renderTaskBoard");
+  else if (tabName === "reports-log") safe("renderReportsLog");
+  else if (tabName === "work-report") safe("renderWorkReport");
 
   if (window.innerWidth <= 1024) toggleSidebar(false);
   if (window.lucide) lucide.createIcons();
@@ -742,6 +770,19 @@ async function submitNewCase() {
       logActivity("CASE_CREATION", `Created new case for ${row.clientName}`, caseId);
       addTimelineEntry(caseId, createdDate, "CASE_CREATION", "Case Created", `New Case Registered (${row.typeOfComplaint})`);
 
+      // Auto Task Generation
+      DB.tasks.push({
+        taskId: uid("TASK"),
+        title: `[${caseId}] ${row.caseTitle}`,
+        priority: row.priority,
+        assignee: row.assignedTo || row.initiatedBy || currentUserEmail(),
+        caseId: caseId,
+        details: row.caseSummary,
+        status: 'todo',
+        createdAt: nowIST(),
+        updatedAtMs: Date.now()
+      });
+
       // Critical Case Alert to Admin
       const criticalTypes = ["Cyber Complaint", "FIR", "Legal Notice", "Consumer Complaint"];
       if (criticalTypes.includes(row.typeOfComplaint)) {
@@ -942,9 +983,15 @@ function renderCaseMaster() {
           <button class="btn btn-outline btn-sm" onclick="showCaseDetail('${c.caseId}')" title="View"><i data-lucide="eye"></i></button>
           <button class="btn btn-primary btn-sm" onclick="startCaseEdit('${c.caseId}')" title="Edit"><i data-lucide="pencil"></i></button>
           ${currentRole() === "Admin" ? `
-          <div style="display:flex; gap:6px; margin-top:6px;">
-            <input id="assign-${c.caseId}" placeholder="assign email" value="${c.assignedTo || ""}" style="min-width:150px; font-size:11px; padding:5px 7px;">
-            <button class="btn btn-outline btn-sm" onclick="assignCaseToUser('${c.caseId}')">Assign</button>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+            <select id="assign-${c.caseId}" class="assign-select" style="min-width:150px; font-size:11px; padding:5px 7px;">
+              <option value="">-- Assign To --</option>
+              ${getUsersList().map(u => `<option value="${u}" ${u === (c.assignedTo || "").toLowerCase() ? 'selected' : ''}>${u}</option>`).join("")}
+            </select>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-outline btn-sm" style="flex:1" onclick="assignCaseToUser('${c.caseId}')">Assign</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteCasePermanently('${c.caseId}')" title="Delete Case"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+            </div>
           </div>` : ""}
         </td>
     </tr>`).join("");
@@ -988,6 +1035,14 @@ function updateBulkActionVisibility() {
   if (cbs.length > 0) {
     bar.style.display = "block";
     countEl.textContent = `${cbs.length} case${cbs.length > 1 ? "s" : ""} selected`;
+    
+    // Populate bulk assign dropdown
+    const bulkSel = document.getElementById("cm-bulk-assign-email");
+    if (bulkSel) {
+      const users = getUsersList();
+      const cur = bulkSel.value;
+      bulkSel.innerHTML = '<option value="">-- Select Staff --</option>' + users.map(u => `<option value="${u}" ${u === cur ? 'selected' : ''}>${u}</option>`).join("");
+    }
   } else {
     bar.style.display = "none";
     const master = document.getElementById("cm-select-all");
@@ -1013,6 +1068,19 @@ async function bulkAssignCases() {
       c.lastUpdateDate = nowIST();
       c.updatedAtMs = Date.now();
       addTimelineEntry(id, nowIST(), "ACTION", "Bulk Assigned", `Case bulk assigned to ${email}`);
+      
+      // Auto Task for Bulk Assignment
+      DB.tasks.push({
+        taskId: uid("TASK"),
+        title: `[${id}] ${c.caseTitle}`,
+        priority: c.priority,
+        assignee: email,
+        caseId: id,
+        details: c.caseSummary,
+        status: 'todo',
+        createdAt: nowIST(),
+        updatedAtMs: Date.now()
+      });
       count++;
     }
   });
@@ -1040,6 +1108,19 @@ async function assignCaseToUser(caseId) {
   c.lastUpdateDate = nowIST();
   c.updatedAtMs = Date.now();
   addTimelineEntry(caseId, nowIST(), "ACTION", "Case Assigned", `Assigned to ${assigned}`);
+
+  // Create Task for assignee
+  DB.tasks.push({
+    taskId: uid("TASK"),
+    title: `[${caseId}] ${c.caseTitle}`,
+    priority: c.priority,
+    assignee: assigned,
+    caseId: caseId,
+    details: c.caseSummary,
+    status: 'todo',
+    createdAt: nowIST(),
+    updatedAtMs: Date.now()
+  });
   toast(`Case assigned to ${assigned}`, "success");
 
   // Notification for assignment
@@ -1058,6 +1139,25 @@ function exportCaseMaster() {
   a.download = "CaseMaster_" + Date.now() + ".csv";
   a.click();
   toast("CSV exported!", "success");
+}
+
+window.deleteCasePermanently = async function(caseId) {
+  if (currentRole() !== "Admin") { toast("Only admin can delete cases.", "error"); return; }
+  if (!confirm(`WARNING: Are you sure you want to delete Case ${caseId}?\n\nThis will permanently delete all related:\n- Timeline entries\n- Actions & History\n- Communication logs\n- Documents\n- Tasks\n- Refund requests\n- Audit logs\n\nThis action cannot be undone.`)) return;
+
+  DB.cases = DB.cases.filter(x => x.caseId !== caseId);
+  DB.history = DB.history.filter(x => x.caseId !== caseId);
+  DB.actions = DB.actions.filter(x => x.caseId !== caseId);
+  DB.comms = DB.comms.filter(x => x.caseId !== caseId);
+  DB.docs = DB.docs.filter(x => x.caseId !== caseId);
+  DB.timeline = DB.timeline.filter(x => x.caseId !== caseId);
+  DB.tasks = DB.tasks.filter(x => x.caseId !== caseId);
+  DB.refunds = DB.refunds.filter(x => x.caseId !== caseId);
+  if (DB.auditLogs) DB.auditLogs = DB.auditLogs.filter(x => x.caseId !== caseId);
+
+  toast(`Case ${caseId} deleted successfully.`, "success");
+  refreshAllUI();
+  await saveDB();
 }
 
 // ══════════════════════════════════════
@@ -1563,15 +1663,15 @@ function autoGenerateTitle() {
 //  PERMISSIONS
 // ══════════════════════════════════════
 function allowedTabsForRole(role) {
-  if (role === "Admin") return ["dashboard", "new-case", "case-master", "history", "action-log", "comm-log", "timeline", "doc-index", "case-study", "admin-panel", "internal-search", "reviewer-panel", "accountant-dashboard", "agreement-module"];
+  if (role === "Admin") return ["dashboard", "new-case", "case-master", "history", "action-log", "comm-log", "timeline", "doc-index", "case-study", "admin-panel", "internal-search", "reviewer-panel", "accountant-dashboard", "agreement-module", "my-tasks", "reports-log", "work-report"];
 
-  if (role === "Accountant") return ["dashboard", "accountant-dashboard", "internal-search",];
+  if (role === "Accountant") return ["dashboard", "accountant-dashboard", "internal-search", "my-tasks", "reports-log", "work-report"];
 
-  if (role === "Reviewer") return ["dashboard", "reviewer-panel", "internal-search"];
+  if (role === "Reviewer") return ["dashboard", "reviewer-panel", "internal-search", "my-tasks", "reports-log", "work-report"];
 
-  if (role === "Operations") return ["dashboard", "new-case", "case-master", "history", "action-log", "comm-log", "doc-index", "case-study", "internal-search", "agreement-module"];
+  if (role === "Operations") return ["dashboard", "new-case", "case-master", "history", "action-log", "comm-log", "doc-index", "case-study", "internal-search", "agreement-module", "my-tasks", "reports-log", "work-report"];
 
-  return ["dashboard", "new-case", "history", "action-log", "comm-log", "doc-index", "internal-search", "agreement-module"];
+  return ["dashboard", "new-case", "history", "action-log", "comm-log", "doc-index", "internal-search", "agreement-module", "my-tasks", "reports-log", "work-report"];
 }
 function applyPermissions() {
   const role = currentRole();
@@ -2331,6 +2431,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!redirectIfLoggedOut()) {
     loadDB();
     applyPermissions();
+    setTimeout(checkSODOnLogin, 2000); // Check after data loads
     const requestedBy = document.getElementById("rr-requestedby");
     if (requestedBy) requestedBy.value = currentUserEmail();
 
@@ -2350,3 +2451,375 @@ window.addEventListener('DOMContentLoaded', () => {
 window.addEventListener("resize", () => {
   if (window.innerWidth > 1024) toggleSidebar(false);
 });
+
+// ══════════════════════════════════════
+//  TASK MANAGEMENT & SOD/EOD LOGIC
+// ══════════════════════════════════════
+
+window.checkSODOnLogin = function() {
+  const email = currentUserEmail();
+  const today = todayDate();
+  // Double check if already filed in DB
+  const alreadyFiled = DB.sod.some(r => r.user === email && r.date === today);
+  if (alreadyFiled) {
+    console.log("SOD already filed for today.");
+    return;
+  }
+  openSODModal();
+};
+
+window.openSODModal = function() {
+  const modal = document.getElementById("sodModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  document.getElementById("sod-name").value = currentUserEmail();
+  document.getElementById("sodDateLabel").textContent = "Date: " + todayDate();
+  document.getElementById("sod-checkin").value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  
+  // Render tasks for today
+  const email = currentUserEmail();
+  const myTasks = DB.tasks.filter(t => t.assignee === email && t.status !== 'done');
+  const list = document.getElementById("sod-task-checklist");
+  list.innerHTML = myTasks.length ? myTasks.map(t => `
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px;">
+      <input type="checkbox" checked disabled>
+      <span>[${t.caseId || 'TASK'}] ${t.title}</span>
+      <span class="tag tag-${t.priority.toLowerCase()}">${t.priority}</span>
+    </div>
+  `).join("") : '<div style="color:var(--muted); font-size:12px;">No tasks assigned yet.</div>';
+  
+  if (window.lucide) lucide.createIcons();
+};
+
+window.closeSODModal = function() {
+  document.getElementById("sodModal").classList.add("hidden");
+};
+
+window.submitSOD = async function() {
+  const row = {
+    sodId: uid("SOD"),
+    date: todayDate(),
+    user: currentUserEmail(),
+    time: document.getElementById("sod-checkin").value,
+    planned: document.getElementById("sod-planned").value,
+    priority: document.getElementById("sod-priority").value,
+    timestamp: nowIST()
+  };
+  DB.sod.push(row);
+  toast("SOD Submitted! Have a productive day.", "success");
+  closeSODModal();
+  await saveDB();
+  renderReportsLog();
+};
+
+window.openEODModal = function() {
+  const modal = document.getElementById("eodModal");
+  modal.classList.remove("hidden");
+  const checkoutTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  document.getElementById("eod-checkout").value = checkoutTime;
+  
+  const email = currentUserEmail();
+  const today = todayDate();
+  
+  // Auto-calculate working hours
+  const sodRecord = DB.sod.find(r => r.user === email && r.date === today);
+  if (sodRecord && sodRecord.time) {
+    try {
+      const [sH, sM] = sodRecord.time.split(':').map(Number);
+      const [eH, eM] = checkoutTime.split(':').map(Number);
+      let diffMin = (eH * 60 + eM) - (sH * 60 + sM);
+      if (diffMin < 0) diffMin = 0;
+      const hours = (diffMin / 60).toFixed(1);
+      document.getElementById("eod-hours").value = hours;
+      document.getElementById("eod-hours-display").textContent = hours;
+    } catch(e) { console.error("Hours calc error", e); }
+  }
+  
+  const myTasks = DB.tasks.filter(t => t.assignee === email && (t.status !== 'done' || t.updatedAtDate === today));
+  const list = document.getElementById("eod-task-checklist");
+  list.innerHTML = myTasks.length ? myTasks.map(t => `
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px;">
+      <input type="checkbox" ${t.status === 'done' ? 'checked' : ''} onchange="toggleTaskFromEOD('${t.taskId}', this.checked)">
+      <span style="${t.status === 'done' ? 'text-decoration:line-through; color:var(--muted);' : ''}">[${t.caseId || 'TASK'}] ${t.title}</span>
+    </div>
+  `).join("") : 'No active tasks found.';
+};
+
+window.toggleTaskFromEOD = function(taskId, isDone) {
+  const t = DB.tasks.find(x => x.taskId === taskId);
+  if (t) {
+    t.status = isDone ? 'done' : 'inprogress';
+    t.updatedAtMs = Date.now();
+    t.updatedAtDate = todayDate();
+    renderTaskBoard();
+  }
+};
+
+window.closeEODModal = function() {
+  document.getElementById("eodModal").classList.add("hidden");
+};
+
+window.submitEOD = async function() {
+  const row = {
+    eodId: uid("EOD"),
+    date: todayDate(),
+    user: currentUserEmail(),
+    time: document.getElementById("eod-checkout").value,
+    hours: document.getElementById("eod-hours").value,
+    summary: document.getElementById("eod-summary").value,
+    score: document.getElementById("eod-score").value,
+    mood: document.getElementById("eod-mood").value,
+    timestamp: nowIST()
+  };
+  DB.eod.push(row);
+  toast("EOD Submitted! Logging out...", "success");
+  closeEODModal();
+  await saveDB();
+  logout();
+};
+
+window.renderTaskBoard = function() {
+  const role = currentRole();
+  const email = currentUserEmail();
+  const filterUser = document.getElementById("task-filter-user") ? document.getElementById("task-filter-user").value : "";
+  
+  let filtered = DB.tasks;
+  if (role === 'Admin') {
+    if (filterUser) {
+      filtered = DB.tasks.filter(t => t.assignee.toLowerCase() === filterUser.toLowerCase());
+    }
+  } else {
+    filtered = DB.tasks.filter(t => (t.assignee || "").toLowerCase() === email.toLowerCase());
+  }
+  
+  const cols = { todo: [], inprogress: [], done: [] };
+  filtered.forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
+  
+  Object.keys(cols).forEach(status => {
+    const list = document.getElementById("list-" + status);
+    const count = document.getElementById("count-" + status);
+    if (!list) return;
+    count.textContent = cols[status].length;
+    list.innerHTML = cols[status].map(t => `
+      <div class="task-card" draggable="true" ondragstart="dragTask(event, '${t.taskId}')" onclick="openTaskDrawer('${t.taskId}')">
+        <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">${t.caseId || t.taskId}</div>
+        <div class="task-card-title">${t.title}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span class="tag tag-${t.priority.toLowerCase()}">${t.priority}</span>
+          <div style="font-size:11px; color:var(--muted);">${t.assignee.split('@')[0]}</div>
+        </div>
+        ${t.dueDate ? `<div style="font-size:10px; color:#ef4444; display:flex; align-items:center; gap:4px;"><i data-lucide="calendar" style="width:10px;height:10px;"></i> Due: ${formatDate(t.dueDate)}</div>` : ''}
+      </div>
+    `).join("");
+  });
+  if (window.lucide) lucide.createIcons();
+};
+
+window.allowDrop = function(ev) { ev.preventDefault(); };
+window.dragTask = function(ev, taskId) { ev.dataTransfer.setData("taskId", taskId); };
+window.dropTask = async function(ev, newStatus) {
+  ev.preventDefault();
+  const taskId = ev.dataTransfer.getData("taskId");
+  const t = DB.tasks.find(x => x.taskId === taskId);
+  if (t && t.status !== newStatus) {
+    t.status = newStatus;
+    t.updatedAtMs = Date.now();
+    t.updatedAtDate = todayDate();
+    renderTaskBoard();
+    await saveDB();
+  }
+};
+
+window.importMyAssignedCases = async function() {
+  const email = currentUserEmail();
+  if (!email) { toast("Please login first", "error"); return; }
+  
+  const myCases = DB.cases.filter(c => (c.assignedTo || "").toLowerCase() === email.toLowerCase());
+  
+  let addedCount = 0;
+  myCases.forEach(c => {
+    // Check if task already exists for this case for THIS user
+    const exists = DB.tasks.some(t => t.caseId === c.caseId && t.assignee.toLowerCase() === email.toLowerCase());
+    if (!exists) {
+      DB.tasks.push({
+        taskId: uid("TASK"),
+        title: `[${c.caseId}] ${c.caseTitle || c.companyName}`,
+        priority: c.priority || 'Medium',
+        assignee: email,
+        caseId: c.caseId,
+        details: c.caseSummary || 'Imported from assigned cases.',
+        status: 'todo',
+        createdAt: nowIST(),
+        updatedAtMs: Date.now()
+      });
+      addedCount++;
+    }
+  });
+  
+  if (addedCount > 0) {
+    toast(`Imported ${addedCount} cases as tasks!`, "success");
+    renderTaskBoard();
+    await saveDB();
+  } else {
+    toast("All your assigned cases are already in your tasks.", "info");
+  }
+};
+
+window.openNewTaskModal = function() {
+  const modal = document.getElementById("newTaskModal");
+  modal.classList.remove("hidden");
+  
+  const assigneeSel = document.getElementById("nt-assignee");
+  assigneeSel.innerHTML = '<option value="">-- Select --</option>';
+  const users = getUsersList();
+  users.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u; opt.textContent = u;
+    assigneeSel.appendChild(opt);
+  });
+  document.getElementById("nt-assignee").value = currentUserEmail();
+};
+
+window.closeNewTaskModal = function() { document.getElementById("newTaskModal").classList.add("hidden"); };
+
+window.createManualTask = async function() {
+  const get = id => document.getElementById(id).value.trim();
+  if (!get("nt-title")) { toast("Title required", "error"); return; }
+  
+  const row = {
+    taskId: uid("TASK"),
+    title: get("nt-title"),
+    priority: get("nt-priority"),
+    assignee: get("nt-assignee") || currentUserEmail(),
+    dueDate: get("nt-due"),
+    caseId: get("nt-caseid"),
+    details: get("nt-details"),
+    status: 'todo',
+    createdAt: nowIST(),
+    updatedAtMs: Date.now()
+  };
+  DB.tasks.push(row);
+  toast("Task created!", "success");
+  closeNewTaskModal();
+  renderTaskBoard();
+  await saveDB();
+};
+
+let currentEditingTaskId = null;
+window.openTaskDrawer = function(taskId) {
+  const t = DB.tasks.find(x => x.taskId === taskId);
+  if (!t) return;
+  currentEditingTaskId = taskId;
+  document.getElementById("taskDrawerOverlay").classList.remove("hidden");
+  document.getElementById("taskDrawer").classList.add("open");
+  
+  document.getElementById("dr-task-id").textContent = t.taskId;
+  document.getElementById("dr-task-title").textContent = t.title;
+  document.getElementById("dr-priority").textContent = t.priority;
+  document.getElementById("dr-assignee").textContent = t.assignee;
+  document.getElementById("dr-due-input").value = t.dueDate || "";
+  document.getElementById("dr-caseid").textContent = t.caseId || "-";
+  document.getElementById("dr-details").textContent = t.details || "No details provided.";
+  document.getElementById("dr-notes").value = t.notes || "";
+  
+  document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("selected"));
+  document.querySelector(`.status-btn.s-${t.status}`)?.classList.add("selected");
+};
+
+window.closeTaskDrawer = function() {
+  document.getElementById("taskDrawerOverlay").classList.add("hidden");
+  document.getElementById("taskDrawer").classList.remove("open");
+};
+
+window.updateTaskStatus = function(status) {
+  const t = DB.tasks.find(x => x.taskId === currentEditingTaskId);
+  if (t) {
+    t.status = status;
+    document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("selected"));
+    document.querySelector(`.status-btn.s-${status}`).classList.add("selected");
+  }
+};
+
+window.saveTaskDrawer = async function() {
+  const t = DB.tasks.find(x => x.taskId === currentEditingTaskId);
+  if (t) {
+    t.notes = document.getElementById("dr-notes").value;
+    t.dueDate = document.getElementById("dr-due-input").value;
+    t.updatedAtMs = Date.now();
+    toast("Task saved!", "success");
+    renderTaskBoard();
+    await saveDB();
+    closeTaskDrawer();
+  }
+};
+
+window.deleteTask = async function() {
+  if (confirm("Delete this task?")) {
+    DB.tasks = DB.tasks.filter(x => x.taskId !== currentEditingTaskId);
+    renderTaskBoard();
+    await saveDB();
+    closeTaskDrawer();
+  }
+};
+
+window.renderReportsLog = function() {
+  const body = document.getElementById("reports-body");
+  if (!body) return;
+  const all = [
+    ...DB.sod.map(r => ({ ...r, type: 'SOD' })),
+    ...DB.eod.map(r => ({ ...r, type: 'EOD' }))
+  ].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  body.innerHTML = all.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td><span class="badge ${r.type === 'SOD' ? 'badge-pending' : 'badge-closed'}">${r.type}</span></td>
+      <td>${r.user}</td>
+      <td>${r.time}</td>
+      <td style="font-size:12px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.planned || r.summary || '-'}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="viewReportDetail('${r.type}', '${r.sodId || r.eodId}')">View</button></td>
+    </tr>
+  `).join("");
+};
+
+window.viewReportDetail = function(type, id) {
+  const r = type === 'SOD' ? DB.sod.find(x => x.sodId === id) : DB.eod.find(x => x.eodId === id);
+  if (!r) return;
+  alert(`${type} Report Details:\n\nUser: ${r.user}\nDate: ${r.date}\nTime: ${r.time}\n\nContent:\n${r.planned || r.summary}`);
+};
+
+window.renderWorkReport = function() {
+  const stats = document.getElementById("work-report-stats");
+  if (!stats) return;
+  const totalTasks = DB.tasks.length;
+  const doneTasks = DB.tasks.filter(t => t.status === 'done').length;
+  
+  stats.innerHTML = `
+    <div class="stat-card"><div class="stat-value">${totalTasks}</div><div class="stat-label">Total Tasks</div></div>
+    <div class="stat-card"><div class="stat-value">${doneTasks}</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card"><div class="stat-value">${DB.sod.length}</div><div class="stat-label">SODs Filed</div></div>
+    <div class="stat-card"><div class="stat-value">${DB.eod.length}</div><div class="stat-label">EODs Filed</div></div>
+  `;
+  
+  const body = document.getElementById("work-log-body");
+  const days = [...new Set([...DB.sod, ...DB.eod].map(r => r.date))].sort().reverse();
+  
+  body.innerHTML = days.map(d => {
+    const sods = DB.sod.filter(x => x.date === d);
+    return sods.map(s => {
+      const e = DB.eod.find(x => x.date === d && x.user === s.user);
+      const tasksDone = DB.tasks.filter(t => t.assignee === s.user && t.status === 'done' && t.updatedAtDate === d).length;
+      return `
+        <tr>
+          <td>${d}</td>
+          <td>${s.user}</td>
+          <td>${s.time}</td>
+          <td>${e ? e.time : '-'}</td>
+          <td>${e ? e.hours : '-'}</td>
+          <td>${tasksDone}</td>
+          <td>${e ? e.score + '/10' : '-'}</td>
+        </tr>
+      `;
+    }).join("");
+  }).join("");
+};
