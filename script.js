@@ -2221,7 +2221,7 @@ async function generateAgreement() {
   const templateId = get("am-template-id");
   const date = get("am-date");
   const company = get("am-company");
-  const clientName = get("am-client-name");
+  const clientName = (document.getElementById("am-client-prefix")?.value || "") + get("am-client-name");
   const address = get("am-address");
   const pincode = get("am-pincode");
   const amount = get("am-amount");

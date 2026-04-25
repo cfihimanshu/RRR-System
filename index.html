@@ -1301,8 +1301,18 @@
         <div class="form-grid">
           <input type="hidden" id="am-template-id" value="12Bn5BbNG19jECr1NGshl4Vp0M15h9BRDTgYFql8PBGg" />
           <div class="field"><label class="required">Date</label><input id="am-date" type="date" /></div>
-          <div class="field"><label class="required">First Party Company</label><input id="am-company" placeholder="e.g. ABC Solutions Pvt Ltd" /></div>
-          <div class="field"><label class="required">Client Name (Mr/Mrs)</label><input id="am-client-name" placeholder="Full name of client" /></div>
+          <div class="field"><label class="required">First Party Company</label><input id="am-company" placeholder="e.g. ABC Solutions Pvt Ltd" oninput="document.getElementById('am-second-company').value = this.value" /></div>
+          <div class="field">
+            <label class="required">Client Name (Mr/Mrs)</label>
+            <div style="display:flex; gap:5px;">
+              <select id="am-client-prefix" style="width:80px; padding:10px; border:1px solid var(--border); border-radius:var(--radius); font-size:14px; background:white;" onchange="document.getElementById('am-second-signatory').value = this.value + document.getElementById('am-client-name').value">
+                <option value="Mr. ">Mr.</option>
+                <option value="Mrs. ">Mrs.</option>
+                <option value="Ms. ">Ms.</option>
+              </select>
+              <input id="am-client-name" placeholder="Full name of client" style="flex:1;" oninput="document.getElementById('am-second-signatory').value = document.getElementById('am-client-prefix').value + this.value" />
+            </div>
+          </div>
           <div class="field"><label>Address</label><textarea id="am-address" placeholder="Client Address"></textarea></div>
           <div class="field"><label>Pincode</label><input id="am-pincode" placeholder="e.g. 110001" /></div>
           <div class="field"><label class="required">Settlement Amount (₹)</label><input id="am-amount" type="number" placeholder="0" /></div>
