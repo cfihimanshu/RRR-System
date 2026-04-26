@@ -1,4 +1,4 @@
-﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  1. LOGIN SECURITY CHECK
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function redirectIfLoggedOut() {
@@ -113,7 +113,7 @@ async function loadDB() {
         normalizeDBShape();
         mergeCollectionsWithLocalBackup();
         refreshAllUI(); // Saari tables ek saath refresh
-        console.log("âœ… Cloud Data Loaded Successfully");
+        console.log("✅ Cloud Data Loaded Successfully");
       }
     } else {
       throw new Error("Server response not ok");
@@ -134,7 +134,7 @@ async function loadDB() {
 
 
 async function saveDB(syncSampleData = false) {
-  console.log("ðŸ”„ Syncing to Google Sheets (Cloud Mode)...");
+  console.log("📄 Syncing to Google Sheets (Cloud Mode)...");
 
   // 1. Local Storage ka bojh khatam karein
   // Hum sirf ek chota sa backup rakhenge bina 'sampleData' ke 
@@ -164,7 +164,7 @@ async function saveDB(syncSampleData = false) {
     });
 
     clearTimeout(timeoutId);
-    console.log("âœ… Data successfully pushed to Google Sheet tabs.");
+    console.log("✅ Data successfully pushed to Google Sheet tabs.");
     toast("Cloud Sync Success!", "success");
 
   } catch (e) {
@@ -314,10 +314,19 @@ async function sendNotification(to, subject, body) {
 }
 
 function refreshNavCount() {
+  const role = currentRole();
+  const email = currentUserEmail();
+  const visibleCases = role === "Admin"
+    ? DB.cases
+    : DB.cases.filter(c => ((c.assignedTo || c.initiatedBy || "").toLowerCase() === email));
+  
+  const count = visibleCases ? visibleCases.length : 0;
+  const countText = count + " case" + (count !== 1 ? "s" : "");
+  
   const el = document.getElementById("navbar-case-count");
-  if (el) el.textContent = (DB.cases ? DB.cases.length : 0) + " case" + (DB.cases.length !== 1 ? "s" : "");
+  if (el) el.textContent = countText;
   const side = document.getElementById("sidebar-case-count");
-  if (side) side.textContent = (DB.cases ? DB.cases.length : 0) + " case" + (DB.cases.length !== 1 ? "s" : "");
+  if (side) side.textContent = countText;
 }
 
 function getUsersList() {
@@ -708,12 +717,12 @@ function runDailyChecker() {
   od.innerHTML = overdue.length ? overdue.map(c => `<div style="padding:8px 0;border-bottom:1px solid var(--gray-border)">
         <span class="case-id-display">${c.caseId}</span> â€” <strong>${c.clientName}</strong>
         <span class="overdue" style="float:right">${c.nextActionDate}</span></div>`).join("") :
-    `<div class="empty-state"><span class="emoji">âœ…</span>No overdue actions</div>`;
+    `<div class="empty-state"><span class="emoji">✅</span>No overdue actions</div>`;
   const ds = document.getElementById("dash-duesoon");
   ds.innerHTML = dueSoon.length ? dueSoon.map(c => `<div style="padding:8px 0;border-bottom:1px solid var(--gray-border)">
         <span class="case-id-display">${c.caseId}</span> â€” <strong>${c.clientName}</strong>
         <span class="due-soon" style="float:right">${c.nextActionDate}</span></div>`).join("") :
-    `<div class="empty-state"><span class="emoji">âœ…</span>Nothing due soon</div>`;
+    `<div class="empty-state"><span class="emoji">✅</span>Nothing due soon</div>`;
   document.getElementById("dash-last-check").textContent = `${currentRole()} Department | Last checked: ${nowIST()}`;
   toast("Daily checker complete!", "success");
 }
@@ -733,7 +742,7 @@ async function submitNewCase() {
       const name = row.querySelector(".s-name") ? row.querySelector(".s-name").value : "";
       const status = row.querySelector(".s-status") ? row.querySelector(".s-status").value : "";
       const amt = row.querySelector(".s-amt") ? row.querySelector(".s-amt").value : "0";
-      if (name) servicesData.push(`${name} [â‚¹${amt}] (${status})`);
+      if (name) servicesData.push(`${name} [₹${amt}] (${status})`);
     });
     const ackInputs = document.querySelectorAll(".ack-input");
     const capturedAcks = Array.from(ackInputs).map(i => i.value.trim()).filter(v => v).join(", ");
@@ -823,7 +832,7 @@ function clearNewCaseForm() {
   const chip = document.getElementById("nc-fir-file-chip"); if (chip) chip.innerHTML = "";
   const fd = document.getElementById("nc-fir-file-data"); if (fd) fd.value = "";
   editingCaseId = null;
-  const submitBtn = document.getElementById("nc-submit-btn"); if (submitBtn) submitBtn.textContent = "âœ… Create Case & Generate Study";
+  const submitBtn = document.getElementById("nc-submit-btn"); if (submitBtn) submitBtn.textContent = "✅ Create Case & Generate Study";
   const cancelBtn = document.getElementById("nc-cancel-edit-btn"); if (cancelBtn) cancelBtn.style.display = "none";
   const titleEl = document.getElementById("new-case-section-title");
   if (titleEl) titleEl.textContent = "New Case Creation";
@@ -882,7 +891,7 @@ function startCaseEdit(caseId) {
       if (firstAmt) firstAmt.value = c.totalAmtPaid || "0";
     } else {
       items.forEach((item, idx) => {
-        const match = item.match(/^(.*?)\s*\[â‚¹([\d.]+)\]\s*\((.*?)\)$/);
+        const match = item.match(/^(.*?)\s*\[₹([\d.]+)\]\s*\((.*?)\)$/);
         const mode = document.getElementById("nc-service-mode") ? document.getElementById("nc-service-mode").value : "single";
         const row = document.createElement("div");
         row.className = "service-row";
@@ -985,7 +994,7 @@ function renderCaseMaster() {
         <td>${c.companyName}</td>
         <td>${c.clientName}<br><span class="text-muted" style="font-size:11px">${c.clientMobile}</span></td>
         <td>${c.servicesSold || "-"}</td>
-        <td>â‚¹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</td>
+        <td>₹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</td>
         <td>${priorityBadge(c.priority)}</td>
         <td>${statusBadge(c.currentStatus)}</td>
         <td>${c.assignedTo || c.initiatedBy || "-"}</td>
@@ -1187,7 +1196,7 @@ function showCaseDetail(caseId) {
           <div><span class="text-muted">Email:</span> ${c.clientEmail || "-"}</div>
           <div><span class="text-muted">Priority:</span> ${priorityBadge(c.priority)}</div>
           <div><span class="text-muted">Status:</span> ${statusBadge(c.currentStatus)}</div>
-          <div><span class="text-muted">Amt Paid:</span> â‚¹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</div>
+          <div><span class="text-muted">Amt Paid:</span> ₹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</div>
           <div><span class="text-muted">Initiated By:</span> ${c.initiatedBy || "-"}</div>
           <div><span class="text-muted">Assigned To:</span> ${c.assignedTo || c.initiatedBy || "-"}</div>
         </div>
@@ -1560,9 +1569,16 @@ async function generateCaseStudy() {
   const comms = DB.comms.filter(cm => cm.caseId === caseId).sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
   document.getElementById("cs-empty").style.display = "none";
   const preview = document.getElementById("case-study-preview"); preview.style.display = "block";
-  document.getElementById("cs-preview-title").textContent = "ðŸ“„ Case Study â€“ " + caseId;
-  const css = `<style>.cs-table{width:100%;border-collapse:collapse;margin-bottom:20px}.cs-table th{background:#1a73e8;color:white;padding:10px;text-align:left;text-transform:uppercase;font-size:13px}.cs-table td{padding:8px 12px;border:1px solid #dadce0;font-size:13px;color:#3c4043}.cs-label{font-weight:600;background:#f8f9fa;width:30%}</style>`;
-  document.getElementById("cs-preview-content").innerHTML = css + `
+  document.getElementById("cs-preview-title").textContent = "📄 Case Study – " + caseId;
+  const css = `<style>
+    .cs-container { background: #0a0c10; color: #fff; padding: 20px; font-family: 'Outfit', sans-serif; }
+    .cs-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid #1a1a1a; }
+    .cs-table th { background: #fbbf24; color: #000; padding: 12px; text-align: left; text-transform: uppercase; font-size: 14px; font-weight: 800; }
+    .cs-table td { padding: 10px 15px; border: 1px solid #1a1a1a; font-size: 13px; color: #e2e8f0; vertical-align: top; }
+    .cs-label { font-weight: 700; background: #111827; color: #fbbf24; width: 30%; border-right: 2px solid #fbbf24 !important; }
+    .cs-section-title { color: #fbbf24; font-size: 18px; font-weight: 700; margin-bottom: 10px; border-bottom: 2px solid #fbbf24; display: inline-block; padding-bottom: 4px; }
+  </style>`;
+  document.getElementById("cs-preview-content").innerHTML = css + `<div class="cs-container">` + `
         <table class="cs-table"><tr><th colspan="2">CASE OVERVIEW</th></tr>
           <tr><td class="cs-label">Case ID</td><td>${c.caseId}</td></tr>
           <tr><td class="cs-label">Created</td><td>${c.createdDate}</td></tr>
@@ -1575,8 +1591,8 @@ async function generateCaseStudy() {
           <tr><td class="cs-label">State</td><td>${c.state || "-"}</td></tr>
           <tr><td class="cs-label">Services</td><td>${c.servicesSold || "-"}</td></tr>
           <tr><td class="cs-label">Engagement Note</td><td>${c.engagementNote || "-"}</td></tr>
-          <tr><td class="cs-label">Amount Paid</td><td>â‚¹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</td></tr>
-          <tr><td class="cs-label">Amount in Dispute</td><td>â‚¹${Number(c.amtInDispute || 0).toLocaleString("en-IN")}</td></tr>
+          <tr><td class="cs-label">Amount Paid</td><td>₹${Number(c.totalAmtPaid || 0).toLocaleString("en-IN")}</td></tr>
+          <tr><td class="cs-label">Amount in Dispute</td><td>₹${Number(c.amtInDispute || 0).toLocaleString("en-IN")}</td></tr>
           <tr><td class="cs-label">MOU Signed</td><td>${c.mouSigned}</td></tr>
           <tr><td class="cs-label">Priority</td><td>${c.priority}</td></tr>
           <tr><td class="cs-label">Status</td><td>${c.currentStatus}</td></tr>
@@ -1597,18 +1613,19 @@ async function generateCaseStudy() {
           <tr><td class="cs-label">Accounts</td><td>${c.accounts || "-"}</td></tr>
         </table>
         <table class="cs-table"><tr><th colspan="4">TIMELINE (${tl.length})</th></tr>
-          <tr style="background:#f1f3f4;font-weight:bold"><td>Date</td><td>Source</td><td>Type</td><td>Summary</td></tr>
+          <tr style="background:#111827;color:#fbbf24;font-weight:bold"><td>Date</td><td>Source</td><td>Type</td><td>Summary</td></tr>
           ${tl.map(t => `<tr><td>${t.eventDate}</td><td>${t.source}</td><td>${t.eventType}</td><td>${t.summary}</td></tr>`).join("") || "<tr><td colspan='4'>No entries</td></tr>"}
         </table>
         <table class="cs-table"><tr><th colspan="4">ACTIONS (${actions.length})</th></tr>
-          <tr style="background:#f1f3f4;font-weight:bold"><td>Date</td><td>Type</td><td>Done By</td><td>Summary</td></tr>
+          <tr style="background:#111827;color:#fbbf24;font-weight:bold"><td>Date</td><td>Type</td><td>Done By</td><td>Summary</td></tr>
           ${actions.map(a => `<tr><td>${a.dateTime}</td><td>${a.actionType}</td><td>${a.doneBy || "-"}</td><td>${a.summary}</td></tr>`).join("") || "<tr><td colspan='4'>No actions</td></tr>"}
         </table>
         <table class="cs-table"><tr><th colspan="4">COMMUNICATIONS (${comms.length})</th></tr>
-          <tr style="background:#f1f3f4;font-weight:bold"><td>Date</td><td>Mode</td><td>Direction</td><td>Summary</td></tr>
+          <tr style="background:#111827;color:#fbbf24;font-weight:bold"><td>Date</td><td>Mode</td><td>Direction</td><td>Summary</td></tr>
           ${comms.map(cm => `<tr><td>${cm.dateTime}</td><td>${cm.mode}</td><td>${cm.direction}</td><td>${cm.summary}</td></tr>`).join("") || "<tr><td colspan='4'>No communications</td></tr>"}
         </table>
-        <div style="font-size:11px;color:#5f6368;text-align:center;margin-top:20px">Generated: ${nowIST()}</div>`;
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:20px">Generated: ${nowIST()} | Confidential Case Study</div>
+    </div>`;
   document.getElementById("cs-download-container").style.display = "block";
   toast("Case Study compiled!", "success");
   await saveDB();
@@ -1632,7 +1649,7 @@ function updateEngagementNote() {
   if (!mouAmtInput || !noteArea) return;
   const val = mouAmtInput.value || "0";
   const formattedAmt = Number(val).toLocaleString('en-IN');
-  noteArea.value = `This is a multi-stage consultancy and execution support engagement. â‚¹${formattedAmt} was formalized under the initial MOU, while the remaining amount was received towards extended scope, third-party facilitation, and stage-wise execution.`;
+  noteArea.value = `This is a multi-stage consultancy and execution support engagement. ₹${formattedAmt} was formalized under the initial MOU, while the remaining amount was received towards extended scope, third-party facilitation, and stage-wise execution.`;
 }
 function toggleServiceMode() {
   const mode = document.getElementById("nc-service-mode") ? document.getElementById("nc-service-mode").value : "single";
@@ -1746,8 +1763,8 @@ function setupUserRoleOptions() {
   const roleSelect = document.getElementById("new-user-role");
   const title = document.getElementById("user-create-title");
   if (!roleSelect) return;
-  if (isAdmin()) { roleSelect.innerHTML = `<option>Admin</option><option>Operations</option><option>Reviewer</option><option>Accountant</option><option>Staff</option>`; if (title) title.textContent = "ðŸ‘¤ Create New User"; }
-  else if (isOperations()) { roleSelect.innerHTML = `<option>Staff</option>`; if (title) title.textContent = "ðŸ‘¤ Create New Staff User"; }
+  if (isAdmin()) { roleSelect.innerHTML = `<option>Admin</option><option>Operations</option><option>Reviewer</option><option>Accountant</option><option>Staff</option>`; if (title) title.innerHTML = `<i data-lucide="user-plus" style="width:16px;height:16px;vertical-align:middle;margin-right:8px;"></i> Create New User`; }
+  else if (isOperations()) { roleSelect.innerHTML = `<option>Staff</option>`; if (title) title.innerHTML = `<i data-lucide="user-plus" style="width:16px;height:16px;vertical-align:middle;margin-right:8px;"></i> Create New Staff User`; }
 }
 
 // Case Assignment Control removed (assignment shown via Initiated By in Case Master)
@@ -1799,13 +1816,13 @@ async function submitRefundRequest() {
   DB.refunds.push(row);
 
   updateCaseMasterField(row.caseId, "currentStatus", "Refund Under Review");
-  logActivity("REFUND_RAISED", `Refund of â‚¹${row.amount} requested for ${row.caseId}`, row.caseId);
+  logActivity("REFUND_RAISED", `Refund of ₹${row.amount} requested for ${row.caseId}`, row.caseId);
 
   await saveDB();
   toast("Refund request sent to reviewer.", "success");
 
   // Notify Admin about new refund request
-  sendNotification(ADMIN_EMAIL, "New Refund Request Raised", `Hello Admin,\n\nA new refund request has been raised.\n\nCase ID: ${row.caseId}\nAmount: â‚¹${row.amount}\nRequested By: ${row.requestedBy}\nSummary: ${row.summary}\n\nPlease review the request in the Admin Panel.`);
+  sendNotification(ADMIN_EMAIL, "New Refund Request Raised", `Hello Admin,\n\nA new refund request has been raised.\n\nCase ID: ${row.caseId}\nAmount: ₹${row.amount}\nRequested By: ${row.requestedBy}\nSummary: ${row.summary}\n\nPlease review the request in the Admin Panel.`);
 
   ["rr-amount", "rr-summary", "rr-ifsc", "rr-acc-num", "rr-acc-name", "rr-branch", "rr-bankname", "rr-file-data"].forEach(id => {
     const el = document.getElementById(id);
@@ -1838,14 +1855,14 @@ function renderRefundApprovals() {
     return `
             <tr>
                 <td>${r.caseId}<br><small>${r.reqId}</small></td>
-                <td>â‚¹${r.amount}<br><small>${r.bankName}</small></td>
+                <td>₹${r.amount}<br><small>${r.bankName}</small></td>
                 <td>${r.requestedBy}<br><small>${r.reviewedBy ? `Reviewed by: ${r.reviewedBy}` : "Waiting review metadata"}</small></td>
                 <td>${r.timestamp || "-"}</td>
                 <td>${getFilePreviewHTML(r.fileLink, "Doc")}</td>
                 <td><span class="badge ${getRefundStatusClass(normalizeRefundStatus(r.status))}">${normalizeRefundStatus(r.status)}</span></td>
                 <td>
                     <div style="display:flex; gap:5px;">
-                        <button class="btn btn-success btn-sm" onclick="processRefundStep('${r.reqId}', 'approve')">Approve âœ…</button>
+                        <button class="btn btn-success btn-sm" onclick="processRefundStep('${r.reqId}', 'approve')">Approve ✅</button>
                         <button class="btn btn-danger btn-sm" onclick="processRefundStep('${r.reqId}', 'reject')">Reject âŒ</button>
                     </div>
                 </td>
@@ -1869,7 +1886,7 @@ async function processRefundStep(reqId, step) {
     addTimelineEntry(ref.caseId, ref.approvedAt, "ACTION", "Refund Approved", `Approved by ${user || "Approver"}`);
     
     // Final Approval Notification
-    sendNotification(ADMIN_EMAIL, "âœ… Refund Final Approval Processed", `Hello Admin,\n\nA refund request has been given FINAL APPROVAL.\n\nCase ID: ${ref.caseId}\nAmount: â‚¹${ref.amount}\nApproved By: ${user}\n\nThe request has been moved to the Accountant for payout.`);
+    sendNotification(ADMIN_EMAIL, "✅ Refund Final Approval Processed", `Hello Admin,\n\nA refund request has been given FINAL APPROVAL.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nApproved By: ${user}\n\nThe request has been moved to the Accountant for payout.`);
     
     toast("Refund approved successfully.", "success");
   } else if (step === "reject") {
@@ -1881,7 +1898,7 @@ async function processRefundStep(reqId, step) {
     addTimelineEntry(ref.caseId, nowIST(), "ACTION", "Refund Rejected", `Rejected by Admin: ${remark}`);
     
     // Admin Rejection Notification
-    sendNotification(ADMIN_EMAIL, "âŒ Refund Request Rejected by Admin", `Hello Admin,\n\nA refund request has been REJECTED in the final stage.\n\nCase ID: ${ref.caseId}\nAmount: â‚¹${ref.amount}\nRejected By: ${user}\nRemark: ${remark}`);
+    sendNotification(ADMIN_EMAIL, "âŒ Refund Request Rejected by Admin", `Hello Admin,\n\nA refund request has been REJECTED in the final stage.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nRejected By: ${user}\nRemark: ${remark}`);
     
     toast("Refund rejected and requester notified.", "info");
   }
@@ -2140,15 +2157,15 @@ async function importSampleExcel(event) {
         successCount++;
       }
 
-      console.log("âœ… Parsed " + successCount + " records from Excel");
-      toast(`âœ… ${successCount} Records Uploaded Successfully! Saving to Cloud...`, "success");
+      console.log("✅ Parsed " + successCount + " records from Excel");
+      toast(`✅ ${successCount} Records Uploaded Successfully! Saving to Cloud...`, "success");
 
       renderSampleSearch();
 
       try {
         await saveDB(true);
-        console.log("âœ… Sample data successfully synced to Cloud");
-        toast("âœ… Data saved to Cloud successfully!", "success");
+        console.log("✅ Sample data successfully synced to Cloud");
+        toast("✅ Data saved to Cloud successfully!", "success");
       } catch (err) {
         console.error("âŒ Cloud save failed:", err);
         toast("âš ï¸ Local save successful but cloud sync failed.", "error");
@@ -2203,7 +2220,7 @@ function renderSampleSearch() {
   });
 
   if (!filtered.length) {
-    body.innerHTML = `<tr><td colspan="14" class="empty-state">ðŸ” No matching results found for "${query}"</td></tr>`;
+    body.innerHTML = `<tr><td colspan="14" class="empty-state">🔍 No matching results found for "${query}"</td></tr>`;
     return;
   }
 
@@ -2219,13 +2236,13 @@ function renderSampleSearch() {
             <td>${d.email || "-"}</td>
             <td>${d.service || "-"}</td>
             <td>${d.bde || "-"}</td>
-            <td style="font-weight:bold; color:var(--green)">â‚¹${d.total || "0"}</td>
-            <td>â‚¹${d.net || "0"}</td>
+            <td style="font-weight:bold; color:var(--green)">₹${d.total || "0"}</td>
+            <td>₹${d.net || "0"}</td>
             <td><span class="badge ${d.status === 'Completed' ? 'badge-closed' : 'badge-pending'}">${d.status || "Pending"}</span></td>
             <td>${d.dept || "-"}</td>
             <td>${d.mou || "No"}</td>
             <td>${d.remarks || "-"}</td>
-            <td>â‚¹${d.mouSignedAmt || "0"}</td>
+            <td>₹${d.mouSignedAmt || "0"}</td>
         </tr>
     `).join("");
 }
@@ -2258,12 +2275,12 @@ function renderReviewerDashboard() {
 
   body.innerHTML = pending.map(r => `
         <tr>
-            <td>â‚¹${r.amount}</td>
+            <td>₹${r.amount}</td>
             <td>${r.requestedBy}</td>
             <td>${getFilePreviewHTML(r.fileLink, "Proof")}</td>
             <td>${r.summary}</td>
             <td>
-                <button class="btn btn-success btn-sm" onclick="handleReview('${r.reqId}', 'approve')">Review âœ…</button>
+                <button class="btn btn-success btn-sm" onclick="handleReview('${r.reqId}', 'approve')">Review ✅</button>
                 <button class="btn btn-danger btn-sm" onclick="handleReview('${r.reqId}', 'reject')">Send Back â†©</button>
             </td>
         </tr>
@@ -2284,7 +2301,7 @@ async function handleReview(reqId, action) {
     addTimelineEntry(ref.caseId, nowIST(), "ACTION", "Refund Reviewed", `Reviewed by ${user}`);
     
     // Reviewer Approval Notification
-    sendNotification(ADMIN_EMAIL, "ðŸ” Refund Request Reviewed (Approved)", `Hello Admin,\n\nA refund request has been REVIEWED and PASSED by the Reviewer.\n\nCase ID: ${ref.caseId}\nAmount: â‚¹${ref.amount}\nReviewed By: ${user}\n\nThis is now waiting for your Final Approval in the Approver Queue.`);
+    sendNotification(ADMIN_EMAIL, "ðŸ” Refund Request Reviewed (Approved)", `Hello Admin,\n\nA refund request has been REVIEWED and PASSED by the Reviewer.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nReviewed By: ${user}\n\nThis is now waiting for your Final Approval in the Approver Queue.`);
     
     toast("Reviewed and moved to approver queue.", "success");
   } else {
@@ -2296,7 +2313,7 @@ async function handleReview(reqId, action) {
     addTimelineEntry(ref.caseId, nowIST(), "ACTION", "Refund Rejected", `Rejected by reviewer: ${remark}`);
     
     // Reviewer Rejection Notification
-    sendNotification(ADMIN_EMAIL, "âŒ Refund Request Rejected by Reviewer", `Hello Admin,\n\nA refund request has been REJECTED by the Reviewer.\n\nCase ID: ${ref.caseId}\nAmount: â‚¹${ref.amount}\nRejected By: ${user}\nRemark: ${remark}\n\nThe request has been sent back to the staff.`);
+    sendNotification(ADMIN_EMAIL, "âŒ Refund Request Rejected by Reviewer", `Hello Admin,\n\nA refund request has been REJECTED by the Reviewer.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nRejected By: ${user}\nRemark: ${remark}\n\nThe request has been sent back to the staff.`);
     
     toast("Rejected and returned to requester with remark.", "info");
   }
@@ -2335,7 +2352,7 @@ function renderAccountantDashboard() {
                 <b>A/C:</b> ${r.accNum}<br>
                 <b>IFSC:</b> ${r.ifsc}
             </td>
-            <td style="color:var(--green); font-weight:bold;">â‚¹${r.amount}</td>
+            <td style="color:var(--green); font-weight:bold;">₹${r.amount}</td>
             <td style="font-size:12px; line-height:1.5;">
                 <b>Requested By:</b> ${r.requestedBy || "-"}<br>
                 <b>Summary:</b> ${r.summary || "-"}<br>
@@ -2386,7 +2403,7 @@ async function submitAccountantPayment() {
   addTimelineEntry(ref.caseId, ref.paymentDate, "ACTION", "Payment Processed", `Refund Paid via Txn: ${utr}`);
 
   // Accountant Payment Notification
-  sendNotification(ADMIN_EMAIL, "ðŸ’° Refund Payment Completed", `Hello Admin,\n\nA refund payment has been COMPLETED by the Accountant.\n\nCase ID: ${ref.caseId}\nAmount: â‚¹${ref.amount}\nUTR/Txn ID: ${utr}\nPaid By: ${ref.paidBy}\n\nThe refund cycle for this case is now finished.`);
+  sendNotification(ADMIN_EMAIL, "💰 Refund Payment Completed", `Hello Admin,\n\nA refund payment has been COMPLETED by the Accountant.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nUTR/Txn ID: ${utr}\nPaid By: ${ref.paidBy}\n\nThe refund cycle for this case is now finished.`);
 
   toast("Payment recorded successfully!", "success");
   closeAccPaymentModal();
@@ -2411,7 +2428,7 @@ window.addAgreementInstallmentRow = function() {
   div.style.cssText = "display:grid; grid-template-columns: 40px 1fr 1fr 40px; gap:10px; align-items:center; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:8px;";
   div.innerHTML = `
     <div style="font-weight:700; color:var(--muted); font-size:13px;">#${rowCount + 1}</div>
-    <input type="number" class="am-inst-amount" placeholder="Amount (â‚¹)" style="padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px;">
+    <input type="number" class="am-inst-amount" placeholder="Amount (₹)" style="padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px;">
     <input type="date" class="am-inst-date" style="padding:6px; font-size:13px; border:1px solid #ccc; border-radius:4px;">
     <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove(); renumberInstallments();" style="padding:4px;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
   `;
@@ -2463,8 +2480,8 @@ async function generateAgreement() {
     const d = row.querySelector(".am-inst-date").value.trim();
     if (amt && d) {
       const dStr = formatDate(d);
-      // Format as "Installment X: â‚¹ Amount payable on date DD/MM/YYYY"
-      installmentsArr.push(`Installment ${idx + 1}: â‚¹ ${Number(amt).toLocaleString('en-IN')} payable on date ${dStr}`);
+      // Format as "Installment X: ₹ Amount payable on date DD/MM/YYYY"
+      installmentsArr.push(`Installment ${idx + 1}: ₹ ${Number(amt).toLocaleString('en-IN')} payable on date ${dStr}`);
     }
   });
   
@@ -2589,6 +2606,17 @@ window.checkSODOnLogin = function() {
 };
 
 window.openSODModal = function() {
+  const email = currentUserEmail();
+  const date = todayDate();
+  
+  if (currentRole() !== "Admin") {
+    const alreadyFilledSOD = DB.sod.find(s => (s.user || "").toLowerCase() === email && s.date === date);
+    if (alreadyFilledSOD) {
+      toast("You have already filled SOD for today. Please fill EOD when your shift ends.", "warning");
+      return;
+    }
+  }
+
   const modal = document.getElementById("sodModal");
   if (!modal) return;
   modal.classList.remove("hidden");
@@ -2597,7 +2625,6 @@ window.openSODModal = function() {
   document.getElementById("sod-checkin").value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   
   // Render tasks for today
-  const email = currentUserEmail();
   const myTasks = DB.tasks.filter(t => t.assignee === email && t.status !== 'done');
   const list = document.getElementById("sod-task-checklist");
   list.innerHTML = myTasks.length ? myTasks.map(t => `
@@ -2633,16 +2660,30 @@ window.submitSOD = async function() {
 };
 
 window.openEODModal = function() {
+  const email = currentUserEmail();
+  const today = todayDate();
+  
+  if (currentRole() !== "Admin") {
+    const sodRecord = DB.sod.find(r => (r.user || "").toLowerCase() === email && r.date === today);
+    if (!sodRecord) {
+      toast("Please fill SOD first before filing EOD.", "error");
+      return;
+    }
+    
+    const alreadyFilledEOD = DB.eod.find(e => (e.user || "").toLowerCase() === email && e.date === today);
+    if (alreadyFilledEOD) {
+      toast("You have already filled EOD for today.", "warning");
+      return;
+    }
+  }
+
   const modal = document.getElementById("eodModal");
   modal.classList.remove("hidden");
   const checkoutTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   document.getElementById("eod-checkout").value = checkoutTime;
   
-  const email = currentUserEmail();
-  const today = todayDate();
-  
   // Auto-calculate working hours
-  const sodRecord = DB.sod.find(r => r.user === email && r.date === today);
+  const sodRecord = DB.sod.find(r => (r.user || "").toLowerCase() === email && r.date === today);
   if (sodRecord && sodRecord.time) {
     try {
       const [sH, sM] = sodRecord.time.split(':').map(Number);
@@ -2885,9 +2926,15 @@ window.deleteTask = async function() {
 window.renderReportsLog = function() {
   const body = document.getElementById("reports-body");
   if (!body) return;
+  const email = currentUserEmail();
+  const isAdminUser = isAdmin();
+
+  const filteredSod = isAdminUser ? DB.sod : DB.sod.filter(r => (r.user || "").toLowerCase() === email);
+  const filteredEod = isAdminUser ? DB.eod : DB.eod.filter(r => (r.user || "").toLowerCase() === email);
+
   const all = [
-    ...DB.sod.map(r => ({ ...r, type: 'SOD' })),
-    ...DB.eod.map(r => ({ ...r, type: 'EOD' }))
+    ...filteredSod.map(r => ({ ...r, type: 'SOD' })),
+    ...filteredEod.map(r => ({ ...r, type: 'EOD' }))
   ].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
   
   body.innerHTML = all.map(r => `
@@ -2911,24 +2958,32 @@ window.viewReportDetail = function(type, id) {
 window.renderWorkReport = function() {
   const stats = document.getElementById("work-report-stats");
   if (!stats) return;
-  const totalTasks = DB.tasks.length;
-  const doneTasks = DB.tasks.filter(t => t.status === 'done').length;
+
+  const email = currentUserEmail();
+  const isAdminUser = isAdmin();
+
+  const userTasks = isAdminUser ? DB.tasks : DB.tasks.filter(t => (t.assignee || "").toLowerCase() === email);
+  const userSod = isAdminUser ? DB.sod : DB.sod.filter(r => (r.user || "").toLowerCase() === email);
+  const userEod = isAdminUser ? DB.eod : DB.eod.filter(r => (r.user || "").toLowerCase() === email);
+
+  const totalTasks = userTasks.length;
+  const doneTasks = userTasks.filter(t => t.status === 'done').length;
   
   stats.innerHTML = `
     <div class="stat-card"><div class="stat-value">${totalTasks}</div><div class="stat-label">Total Tasks</div></div>
     <div class="stat-card"><div class="stat-value">${doneTasks}</div><div class="stat-label">Completed</div></div>
-    <div class="stat-card"><div class="stat-value">${DB.sod.length}</div><div class="stat-label">SODs Filed</div></div>
-    <div class="stat-card"><div class="stat-value">${DB.eod.length}</div><div class="stat-label">EODs Filed</div></div>
+    <div class="stat-card"><div class="stat-value">${userSod.length}</div><div class="stat-label">SODs Filed</div></div>
+    <div class="stat-card"><div class="stat-value">${userEod.length}</div><div class="stat-label">EODs Filed</div></div>
   `;
   
   const body = document.getElementById("work-log-body");
-  const days = [...new Set([...DB.sod, ...DB.eod].map(r => r.date))].sort().reverse();
+  const days = [...new Set([...userSod, ...userEod].map(r => r.date))].sort().reverse();
   
   body.innerHTML = days.map(d => {
-    const sods = DB.sod.filter(x => x.date === d);
+    const sods = userSod.filter(x => x.date === d);
     return sods.map(s => {
-      const e = DB.eod.find(x => x.date === d && x.user === s.user);
-      const tasksDone = DB.tasks.filter(t => t.assignee === s.user && t.status === 'done' && t.updatedAtDate === d).length;
+      const e = userEod.find(x => x.date === d && x.user === s.user);
+      const tasksDone = userTasks.filter(t => (t.assignee || "").toLowerCase() === (s.user || "").toLowerCase() && t.status === 'done' && t.updatedAtDate === d).length;
       return `
         <tr>
           <td>${d}</td>

@@ -634,11 +634,11 @@
           <option value="">All Assignees</option>
         </select>
       </div>
-      <div id="cm-bulk-bar" class="card"
+      <div id="cm-bulk-bar" class="card admin-only"
         style="display:none; margin-bottom:15px; background:rgba(251, 191, 36, 0.05); border:1px solid var(--border); padding:12px 20px;">
         <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
           <span id="cm-selected-count" style="font-weight:700; color:#0056b3;">0 cases selected</span>
-          <div style="height:24px; border-right:1px solid #c0d7ef;"></div>
+          <div style="height:24px; border-right:1px solid #c0d7ef;" class="admin-only"></div>
           <label style="font-size:13px; font-weight:600;">Bulk Assign to Email:</label>
           <select id="cm-bulk-assign-email" style="max-width:240px; padding:6px 12px; font-size:13px;">
             <option value="">-- Select Staff --</option>
@@ -652,7 +652,7 @@
           <table id="cm-table">
             <thead>
               <tr>
-                <th style="width:40px;"><input type="checkbox" id="cm-select-all" onclick="toggleSelectAll(this)"></th>
+                <th style="width:40px;" class="admin-only"><input type="checkbox" id="cm-select-all" onclick="toggleSelectAll(this)"></th>
                 <th>Case ID</th>
                 <th>Created</th>
                 <th>Company</th>
@@ -1262,7 +1262,7 @@
       </div>
       <div class="card">
         <input type="text" id="sample-search-input" placeholder="Type Company Name, Contact, BDE or Email to search..."
-          style="width:100%; padding:15px; font-size:16px; border-radius:8px; border:2px solid var(--blue);"
+          style="width:100%; padding:15px; font-size:16px; border-radius:8px; border:2px solid var(--primary); background:var(--input-bg); color:#fff;"
           oninput="renderSampleSearch()">
       </div>
       <div class="card" style="padding:0; overflow-x:auto;">
@@ -1447,7 +1447,7 @@
           <div class="section-title">Work Report</div>
           <div class="section-sub">Aggregated productivity metrics</div>
         </div>
-        <button class="btn btn-outline" onclick="exportWorkReport()"><i data-lucide="download"></i> Export CSV</button>
+        <button class="btn btn-outline admin-only" onclick="exportWorkReport()"><i data-lucide="download"></i> Export CSV</button>
       </div>
       <div class="stats-grid" id="work-report-stats"></div>
       <div class="card">
@@ -1680,7 +1680,7 @@
   <!-- Accountant Payment Modal -->
   <div class="modal-overlay hidden" id="accPaymentModal">
     <div class="modal-box" style="max-width:450px;">
-      <div class="modal-title">💸 Complete <span style="color:var(--primary);">Refund Payment</span></div>
+      <div class="modal-title">💰 Complete <span style="color:var(--primary);">Refund Payment</span></div>
       <div class="modal-desc">Enter payment details and upload screenshot.</div>
       <div class="form-grid">
         <div class="field span2">
@@ -1703,7 +1703,7 @@
       </div>
       <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
         <button class="btn btn-outline" onclick="closeAccPaymentModal()">Cancel</button>
-        <button class="btn btn-success" onclick="submitAccountantPayment()">Confirm Payment 💸</button>
+        <button class="btn btn-success" onclick="submitAccountantPayment()">Confirm Payment ✅</button>
       </div>
     </div>
   </div>
