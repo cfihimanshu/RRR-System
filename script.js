@@ -213,29 +213,23 @@ function nowIST() { return new Date().toLocaleString("en-IN", { timeZone: "Asia/
 function todayDate() { return new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }); }
 
 // â”€ DATE FORMATTER UTILITY â”€
+function formatLongDate(dateInput) {
+  if (!dateInput) return "-";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return dateInput;
+  const day = d.getDate();
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 function formatDate(dateInput) {
   if (!dateInput) return "-";
-
   try {
-    let date;
-
-    // Agar string hai toh parse karein
-    if (typeof dateInput === "string") {
-      date = new Date(dateInput);
-    } else if (dateInput instanceof Date) {
-      date = dateInput;
-    } else {
-      return String(dateInput);
-    }
-
-    // Agar invalid date hai
+    const date = new Date(dateInput);
     if (isNaN(date.getTime())) return String(dateInput);
-
-    // Format: DD/MM/YYYY (Simple aur professional)
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
-
     return `${day}/${month}/${year}`;
   } catch (e) {
     return String(dateInput);
@@ -245,7 +239,11 @@ function formatDate(dateInput) {
 function uid(prefix) { return prefix + "-" + Date.now() + "-" + Math.floor(Math.random() * 1000); }
 
 function getBrandCode(brandInput) {
-  const cleaned = String(brandInput || "").trim().replace(/[^a-zA-Z0-9\s]/g, " ");
+  const brand = String(brandInput || "").toLowerCase().trim();
+  if (brand === "startupflora") return "SF";
+  if (brand === "startupkare") return "SK";
+  
+  const cleaned = brand.replace(/[^a-z0-9\s]/g, " ");
   const words = cleaned.split(/\s+/).filter(Boolean);
   if (!words.length) return "XX";
   if (words.length === 1) {
@@ -905,11 +903,11 @@ function startCaseEdit(caseId) {
         }
 
         row.innerHTML = `
-            ${mode === "multiple" && idx > 0 ? `<div class="remove-service" onclick="this.parentElement.remove(); calculateTotalServiceAmount();">âœ•</div>` : ""}
+            ${mode === "multiple" && idx > 0 ? `<div class="remove-service" onclick="this.parentElement.remove(); calculateFinancials();">✕</div>` : ""}
             <div class="field"><label>Service Name</label><input class="s-name" value="${name}" placeholder="Enter service"></div>
-            <div class="field"><label>Service Amount</label><input type="number" class="s-amt" value="${amt}" placeholder="0" oninput="calculateTotalServiceAmount()"></div>
+            <div class="field"><label>Service Amount</label><input type="number" class="s-amt" value="${amt}" placeholder="0" oninput="calculateFinancials()"></div>
             <div class="field"><label>MOU Signed</label><select class="s-mou"><option ${c.mouSigned === "No" ? "selected" : ""}>No</option><option ${c.mouSigned === "Yes" ? "selected" : ""}>Yes</option></select></div>
-            <div class="field"><label>Signed MOU Amount</label><input type="number" class="s-mou-amt" value="${c.mouSigned === "Yes" ? amt : "0"}" placeholder="0"></div>
+            <div class="field"><label>Signed MOU Amount</label><input type="number" class="s-mou-amt" value="${c.mouSigned === "Yes" ? amt : "0"}" placeholder="0" oninput="calculateFinancials()"></div>
             <div class="field"><label>Work Status</label>
                 <select class="s-status">
                     <option ${status === "Not Initiated" ? "selected" : ""}>Not Initiated</option>
@@ -953,14 +951,25 @@ function startCaseEdit(caseId) {
   if (window.lucide) lucide.createIcons();
 }
 
-function calculateTotalServiceAmount() {
+function calculateFinancials() {
   const amts = document.querySelectorAll(".s-amt");
-  let total = 0;
-  amts.forEach(input => {
-    total += parseFloat(input.value) || 0;
-  });
-  const totalField = document.getElementById("nc-amtpaid");
-  if (totalField) totalField.value = total;
+  const mouAmts = document.querySelectorAll(".s-mou-amt");
+  
+  let totalPaid = 0;
+  let totalMOU = 0;
+  
+  amts.forEach(el => totalPaid += (parseFloat(el.value) || 0));
+  mouAmts.forEach(el => totalMOU += (parseFloat(el.value) || 0));
+  
+  const paidField = document.getElementById("nc-amtpaid");
+  const mouField = document.getElementById("nc-mouval");
+  const disputeField = document.getElementById("nc-dispute");
+  
+  if (paidField) paidField.value = totalPaid;
+  if (mouField) mouField.value = totalMOU;
+  if (disputeField) disputeField.value = totalPaid - totalMOU;
+  
+  updateEngagementNote();
 }
 function cancelCaseEdit() { clearNewCaseForm(); }
 
@@ -988,7 +997,7 @@ function renderCaseMaster() {
   }).slice().reverse();
   if (!filtered.length) { body.innerHTML = `<tr><td colspan="12"><div class="empty-state"><i data-lucide="folder-open" style="width:24px; height:24px; opacity:0.5;"></i> No cases match your filter.</div></td></tr>`; updateBulkActionVisibility(); return; }
   body.innerHTML = filtered.map(c => `<tr>
-        <td><input type="checkbox" class="cm-row-select" data-id="${c.caseId}" onchange="updateBulkActionVisibility()"></td>
+        ${role === 'Admin' ? `<td><input type="checkbox" class="cm-row-select" data-id="${c.caseId}" onchange="updateBulkActionVisibility()"></td>` : ''}
         <td><span class="case-id-display" style="cursor:pointer;color:var(--blue)" onclick="showCaseDetail('${c.caseId}')">${c.caseId}</span></td>
         <td>${formatDate(c.createdDate)}</td>
         <td>${c.companyName}</td>
@@ -1002,7 +1011,7 @@ function renderCaseMaster() {
         <td>
           <button class="btn btn-outline btn-sm" onclick="showCaseDetail('${c.caseId}')" title="View"><i data-lucide="eye"></i></button>
           <button class="btn btn-primary btn-sm" onclick="startCaseEdit('${c.caseId}')" title="Edit"><i data-lucide="pencil"></i></button>
-          ${currentRole() === "Admin" ? `
+          ${role === "Admin" ? `
           <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
             <select id="assign-${c.caseId}" class="assign-select" style="min-width:150px; font-size:11px; padding:5px 7px;">
               <option value="">-- Assign To --</option>
@@ -1669,11 +1678,11 @@ function addServiceRow() {
   const row = document.createElement("div");
   row.className = "service-row";
   row.innerHTML = `
-        ${mode === "multiple" && rowCount > 0 ? `<div class="remove-service" onclick="this.parentElement.remove(); calculateTotalServiceAmount();">âœ•</div>` : ""}
+        ${mode === "multiple" && rowCount > 0 ? `<div class="remove-service" onclick="this.parentElement.remove(); calculateFinancials();">✕</div>` : ""}
         <div class="field"><label>Service Name</label><input class="s-name" placeholder="Enter service"></div>
-        <div class="field"><label>Service Amount</label><input type="number" class="s-amt" placeholder="0" oninput="calculateTotalServiceAmount()"></div>
+        <div class="field"><label>Service Amount</label><input type="number" class="s-amt" placeholder="0" oninput="calculateFinancials()"></div>
         <div class="field"><label>MOU Signed</label><select class="s-mou"><option>No</option><option>Yes</option></select></div>
-        <div class="field"><label>Signed MOU Amount</label><input type="number" class="s-mou-amt" placeholder="0"></div>
+        <div class="field"><label>Signed MOU Amount</label><input type="number" class="s-mou-amt" placeholder="0" oninput="calculateFinancials()"></div>
         <div class="field"><label>Work Status</label>
             <select class="s-status">
                 <option>Not Initiated</option><option>In Progress</option><option>Work in Progress</option>
@@ -2479,9 +2488,9 @@ async function generateAgreement() {
     const amt = row.querySelector(".am-inst-amount").value.trim();
     const d = row.querySelector(".am-inst-date").value.trim();
     if (amt && d) {
-      const dStr = formatDate(d);
-      // Format as "Installment X: ₹ Amount payable on date DD/MM/YYYY"
-      installmentsArr.push(`Installment ${idx + 1}: ₹ ${Number(amt).toLocaleString('en-IN')} payable on date ${dStr}`);
+      const dStr = formatLongDate(d);
+      // Format: "Installment X: ₹20,000/- payable on 15 May 2026."
+      installmentsArr.push(`Installment ${idx + 1}: ₹${Number(amt).toLocaleString('en-IN')}/- payable on ${dStr}.`);
     }
   });
   
@@ -2497,6 +2506,8 @@ async function generateAgreement() {
     settleAmt: amount,
     amtWords: amountWords,
     installmentsText: installmentsText,
+    installments: installmentsText, // Redundant key for template compatibility
+    installmentSchedule: installmentsText,
     firstPartySignatory: firstSig,
     secondPartySignatory: secondSig
   };
@@ -2504,10 +2515,22 @@ async function generateAgreement() {
   btn.innerHTML = `<i data-lucide="loader" class="spin" style="width:16px;height:16px;vertical-align:middle;"></i> Generating...`;
   btn.disabled = true;
 
+  // Hybrid payload for maximum compatibility
+  const fullPayload = {
+    action: "generateDoc",
+    templateId: templateId,
+    payload: payload, // Re-include the original nested structure
+    ...payload,       // Keep flattened keys for placeholder replacement
+    installments: installmentsText,
+    INSTALLMENTS: installmentsText,
+    installmentText: installmentsText,
+    installment: installmentsText
+  };
+
   try {
     const res = await fetch(SCRIPT_URL, {
       method: "POST",
-      body: JSON.stringify({ action: "generateDoc", templateId: templateId, payload: payload })
+      body: JSON.stringify(fullPayload)
     });
     
     const rawText = await res.text();

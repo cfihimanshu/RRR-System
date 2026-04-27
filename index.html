@@ -73,7 +73,8 @@
           <div class="section-sub" id="dash-last-check">Last checked: never</div>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-primary" onclick="openSODModal()"><i data-lucide="clipboard-list"></i> Fill SOD</button>
+          <button class="btn btn-primary" onclick="openSODModal()"><i data-lucide="clipboard-list"></i> Fill
+            SOD</button>
           <button class="btn btn-outline" onclick="openEODModal()"><i data-lucide="moon"></i> Fill EOD</button>
         </div>
       </div>
@@ -170,7 +171,8 @@
         </div>
         <div class="col">
           <div class="card">
-            <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="clock"
+            <div class="card-title"><span class="icon"
+                style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="clock"
                   style="width:16px;height:16px;"></i></span> Due</div>
             <div id="dash-duesoon">
               <div class="empty-state"><span class="emoji"></span>Nothing due soon</div>
@@ -204,20 +206,29 @@
       </div>
 
       <div class="card" id="refund-request-card">
-        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="indian-rupee" style="width:16px;height:16px;"></i></span>Refund Request</div>
+        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i
+              data-lucide="indian-rupee" style="width:16px;height:16px;"></i></span>Refund Request</div>
         <div class="form-grid cols3">
           <div class="field"><label class="required">Case ID</label><select id="rr-caseid"></select></div>
-          <div class="field"><label class="required"> Amount (₹)</label><input id="rr-amount" type="number" placeholder="Enter amount"></div>
-          <div class="field"><label>Requested By</label><input id="rr-requestedby" readonly placeholder="Auto-filled"></div>
+          <div class="field"><label class="required"> Amount (₹)</label><input id="rr-amount" type="number"
+              placeholder="Enter amount"></div>
+          <div class="field"><label>Requested By</label><input id="rr-requestedby" readonly placeholder="Auto-filled">
+          </div>
 
-          <div class="field span3"><label class="required">Summary</label><textarea id="rr-summary" placeholder="Brief reason for refund..."></textarea></div>
+          <div class="field span3"><label class="required">Summary</label><textarea id="rr-summary"
+              placeholder="Brief reason for refund..."></textarea></div>
 
           <!-- Bank Details Section -->
-          <div class="field"><label class="required">Bank Name</label><input id="rr-bankname" placeholder="e.g. HDFC Bank"></div>
-          <div class="field"><label class="required">Account Holder Name</label><input id="rr-acc-name" placeholder="Name as per bank"></div>
-          <div class="field"><label class="required">Account Number</label><input id="rr-acc-num" placeholder="Enter account no."></div>
-          <div class="field"><label class="required">IFSC Code</label><input id="rr-ifsc" placeholder="e.g. HDFC0001234"></div>
-          <div class="field"><label class="required">Branch Name</label><input id="rr-branch" placeholder="Enter branch name"></div>
+          <div class="field"><label class="required">Bank Name</label><input id="rr-bankname"
+              placeholder="e.g. HDFC Bank"></div>
+          <div class="field"><label class="required">Account Holder Name</label><input id="rr-acc-name"
+              placeholder="Name as per bank"></div>
+          <div class="field"><label class="required">Account Number</label><input id="rr-acc-num"
+              placeholder="Enter account no."></div>
+          <div class="field"><label class="required">IFSC Code</label><input id="rr-ifsc"
+              placeholder="e.g. HDFC0001234"></div>
+          <div class="field"><label class="required">Branch Name</label><input id="rr-branch"
+              placeholder="Enter branch name"></div>
           <div class="field"><label>Account Type</label>
             <select id="rr-acc-type">
               <option>Saving</option>
@@ -368,8 +379,13 @@
               <option>Lien</option>
             </select>
           </div>
-          <div class="field"><label class="required">Brand Name</label><input id="nc-brand"
-              placeholder="e.g. Startup / Brand name"></div>
+          <div class="field">
+            <label class="required">Brand Name</label>
+            <select id="nc-brand">
+              <option value="startupflora">StartupFlora</option>
+              <option value="startupkare">StartupKare</option>
+            </select>
+          </div>
         </div>
 
         <!-- Conditional Complaint Fields -->
@@ -385,7 +401,8 @@
           </div>
         </div>
 
-        <div id="fir-extra" style="display:none; background:rgba(248, 113, 113, 0.1); padding:15px; border-radius:8px; margin-top:12px; border:1px solid var(--border);">
+        <div id="fir-extra"
+          style="display:none; background:rgba(248, 113, 113, 0.1); padding:15px; border-radius:8px; margin-top:12px; border:1px solid var(--border);">
           <div class="form-grid">
             <div class="field"><label>FIR Number</label><input id="nc-fir-num" placeholder="Enter FIR No."></div>
             <div class="field">
@@ -439,8 +456,8 @@
 
       <!-- Client Information -->
       <div class="card">
-        <div class="card-title"><span class="icon" style="background:rgba(74, 222, 128, 0.15); color:#4ade80;"><i data-lucide="user"
-              style="width:16px;height:16px;"></i></span> Client Information</div>
+        <div class="card-title"><span class="icon" style="background:rgba(74, 222, 128, 0.15); color:#4ade80;"><i
+              data-lucide="user" style="width:16px;height:16px;"></i></span> Client Information</div>
         <div class="form-grid cols3">
           <div class="field"><label class="required">Client Name</label><input id="nc-client" placeholder="Full name" />
           </div>
@@ -467,10 +484,10 @@
 
       <!-- Financial Details -->
       <div class="card">
-        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="banknote"
-              style="width:16px;height:16px;"></i></span> Financial Details</div>
+        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i
+              data-lucide="banknote" style="width:16px;height:16px;"></i></span> Financial Details</div>
         <div class="form-grid cols3">
-          <div class="field"><label>Total Amount Paid (₹)</label><input id="nc-amtpaid" type="number" placeholder="0" />
+          <div class="field"><label>Total Amount Paid (₹)</label><input id="nc-amtpaid" type="number" placeholder="0" oninput="calculateFinancials()" />
           </div>
           <div class="field"><label>MOU Signed?</label>
             <select id="nc-mou">
@@ -479,8 +496,8 @@
             </select>
           </div>
           <div class="field"><label>Total MOU Value (₹)</label><input id="nc-mouval" type="number" placeholder="0"
-              oninput="updateEngagementNote()" /></div>
-          <div class="field"><label>Amount in Dispute (₹)</label><input id="nc-dispute" type="number" placeholder="0" />
+              oninput="calculateFinancials()" /></div>
+          <div class="field"><label>Amount in Dispute (₹)</label><input id="nc-dispute" type="number" placeholder="0" readonly style="background:rgba(251,191,36,0.05); cursor:not-allowed;" />
           </div>
         </div>
       </div>
@@ -517,8 +534,8 @@
 
       <!-- Case Narrative -->
       <div class="card">
-        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="file-edit"
-              style="width:16px;height:16px;"></i></span> Case Narrative</div>
+        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i
+              data-lucide="file-edit" style="width:16px;height:16px;"></i></span> Case Narrative</div>
         <div class="form-grid">
           <div class="field span2"><label class="required">Case Summary</label><textarea id="nc-summary"
               placeholder="Brief overview of the case..."></textarea></div>
@@ -550,14 +567,15 @@
       </div>
 
       <!-- Team Assignment -->
-      <div class="card">
-        <div class="card-title"><span class="icon" style="background:rgba(167, 139, 250, 0.15); color:#a78bfa;"><i data-lucide="users"
-              style="width:16px;height:16px;"></i></span> Team Assignment</div>
+      <div class="card admin-only">
+        <div class="card-title"><span class="icon" style="background:rgba(167, 139, 250, 0.15); color:#a78bfa;"><i
+              data-lucide="users" style="width:16px;height:16px;"></i></span> Team Assignment</div>
         <div class="form-grid">
           <div class="field"><label>Initiated By</label>
             <select id="nc-lead">
               <option value="">-- Select --</option>
               <option value="Divya">Divya</option>
+              <option value="Sumit">Sumit</option>
               <option value="Meghna">Meghna</option>
               <option value="Deepesh">Deepesh</option>
             </select>
@@ -565,6 +583,7 @@
           <div class="field"><label>Accountable</label>
             <select id="nc-negotiator">
               <option value="">-- Select --</option>
+              <option value="Sumit">Sumit</option>
               <option value="Divya">Divya</option>
               <option value="Meghna">Meghna</option>
               <option value="Deepesh">Deepesh</option>
@@ -630,7 +649,7 @@
           <option>Medium</option>
           <option>Low</option>
         </select>
-        <select id="cm-filter-assignee" onchange="renderCaseMaster()" style="width:160px">
+        <select id="cm-filter-assignee" class="admin-only" onchange="renderCaseMaster()" style="width:160px">
           <option value="">All Assignees</option>
         </select>
       </div>
@@ -652,7 +671,8 @@
           <table id="cm-table">
             <thead>
               <tr>
-                <th style="width:40px;" class="admin-only"><input type="checkbox" id="cm-select-all" onclick="toggleSelectAll(this)"></th>
+                <th style="width:40px;" class="admin-only"><input type="checkbox" id="cm-select-all"
+                    onclick="toggleSelectAll(this)"></th>
                 <th>Case ID</th>
                 <th>Created</th>
                 <th>Company</th>
@@ -691,8 +711,9 @@
       <div class="row">
         <div class="col" style="max-width:480px">
           <div class="card">
-            <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i
-                  data-lucide="scroll" style="width:16px;height:16px;"></i></span> Add History Entry</div>
+            <div class="card-title"><span class="icon"
+                style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="scroll"
+                  style="width:16px;height:16px;"></i></span> Add History Entry</div>
             <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
               <select id="hu-caseid" onchange="validateCaseId('hu-caseid')">
                 <option value="">-- Select Case --</option>
@@ -783,7 +804,8 @@
       <div class="row">
         <div class="col" style="max-width:480px">
           <div class="card">
-            <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="zap"
+            <div class="card-title"><span class="icon"
+                style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="zap"
                   style="width:16px;height:16px;"></i></span> Log New Action</div>
             <div class="field" style="margin-bottom:12px"><label class="required">Case ID</label>
               <select id="al-caseid">
@@ -1133,8 +1155,9 @@
       <div class="row">
         <div class="col" style="max-width:320px">
           <div class="card">
-            <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i
-                  data-lucide="file-text" style="width:16px;height:16px;"></i></span> Generate / Refresh</div>
+            <div class="card-title"><span class="icon"
+                style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="file-text"
+                  style="width:16px;height:16px;"></i></span> Generate / Refresh</div>
             <div class="field" style="margin-bottom:10px">
               <label>Search Case</label>
               <input id="cs-search" placeholder="Type Case ID / Client / Company..." oninput="renderCaseStudyOptions()">
@@ -1305,38 +1328,53 @@
           <div class="section-sub">Generate Settlement Agreements dynamically</div>
         </div>
       </div>
-      
+
       <div class="card">
-        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i data-lucide="file-text" style="width:16px;height:16px;"></i></span> Agreement Details</div>
+        <div class="card-title"><span class="icon" style="background:rgba(251, 191, 36, 0.15); color:var(--primary);"><i
+              data-lucide="file-text" style="width:16px;height:16px;"></i></span> Agreement Details</div>
         <div class="form-grid">
           <input type="hidden" id="am-template-id" value="12Bn5BbNG19jECr1NGshl4Vp0M15h9BRDTgYFql8PBGg" />
           <div class="field"><label class="required">Date</label><input id="am-date" type="date" /></div>
-          <div class="field"><label class="required">First Party Company</label><input id="am-company" placeholder="e.g. ABC Solutions Pvt Ltd" oninput="document.getElementById('am-second-company').value = this.value" /></div>
+          <div class="field"><label class="required">First Party Company</label><input id="am-company"
+              placeholder="e.g. ABC Solutions Pvt Ltd"
+              oninput="document.getElementById('am-second-company').value = this.value" /></div>
           <div class="field">
             <label class="required">Client Name (Mr/Mrs)</label>
             <div style="display:flex; gap:5px;">
-              <select id="am-client-prefix" style="width:80px; padding:10px; border:1px solid var(--border); border-radius:var(--radius); font-size:14px; background:#000; color:#fff;" onchange="document.getElementById('am-second-signatory').value = this.value + document.getElementById('am-client-name').value">
+              <select id="am-client-prefix"
+                style="width:80px; padding:10px; border:1px solid var(--border); border-radius:var(--radius); font-size:14px; background:#000; color:#fff;"
+                onchange="document.getElementById('am-second-signatory').value = this.value + document.getElementById('am-client-name').value">
                 <option value="Mr. ">Mr.</option>
                 <option value="Mrs. ">Mrs.</option>
                 <option value="Ms. ">Ms.</option>
               </select>
-              <input id="am-client-name" placeholder="Full name of client" style="flex:1;" oninput="document.getElementById('am-second-signatory').value = document.getElementById('am-client-prefix').value + this.value" />
+              <input id="am-client-name" placeholder="Full name of client" style="flex:1;"
+                oninput="document.getElementById('am-second-signatory').value = document.getElementById('am-client-prefix').value + this.value" />
             </div>
           </div>
-          <div class="field"><label>Address</label><textarea id="am-address" placeholder="Client Address"></textarea></div>
+          <div class="field"><label>Address</label><textarea id="am-address" placeholder="Client Address"></textarea>
+          </div>
           <div class="field"><label>Pincode</label><input id="am-pincode" placeholder="e.g. 110001" /></div>
-          <div class="field"><label class="required">Settlement Amount (₹)</label><input id="am-amount" type="number" placeholder="0" /></div>
-          <div class="field"><label class="required">Amount in Words</label><input id="am-amount-words" placeholder="e.g. Ten Thousand Only" /></div>
-          <div class="field"><label class="required">First Party Signatory</label><input id="am-first-signatory" placeholder="First Party Name" /></div>
-          <div class="field"><label class="required">Second Company</label><input id="am-second-company" placeholder="Second Company Name" /></div>
-          <div class="field"><label class="required">Second Party Signatory</label><input id="am-second-signatory" placeholder="Second Party Name" /></div>
+          <div class="field"><label class="required">Settlement Amount (₹)</label><input id="am-amount" type="number"
+              placeholder="0" /></div>
+          <div class="field"><label class="required">Amount in Words</label><input id="am-amount-words"
+              placeholder="e.g. Ten Thousand Only" /></div>
+          <div class="field"><label class="required">First Party Signatory</label><input id="am-first-signatory"
+              placeholder="First Party Name" /></div>
+          <div class="field"><label class="required">Second Company</label><input id="am-second-company"
+              placeholder="Second Company Name" /></div>
+          <div class="field"><label class="required">Second Party Signatory</label><input id="am-second-signatory"
+              placeholder="Second Party Name" /></div>
           <div class="field span2">
-            <label style="display:block; margin-bottom:10px; font-weight:700; color:var(--primary);">💰 Installment Schedule (Max 10)</label>
+            <label style="display:block; margin-bottom:10px; font-weight:700; color:var(--primary);">💰 Installment
+              Schedule (Max 10)</label>
             <div id="am-installments-container" style="display:flex; flex-direction:column; gap:8px;">
               <!-- Installment rows will appear here -->
             </div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="addAgreementInstallmentRow()" style="margin-top:12px; border-color:var(--primary); color:var(--primary);">
-              <i data-lucide="plus-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Add Installment Row
+            <button type="button" class="btn btn-outline btn-sm" onclick="addAgreementInstallmentRow()"
+              style="margin-top:12px; border-color:var(--primary); color:var(--primary);">
+              <i data-lucide="plus-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Add Installment
+              Row
             </button>
           </div>
         </div>
@@ -1344,21 +1382,32 @@
         <hr class="divider" style="margin:20px 0;">
 
         <div class="btn-row" style="margin-top:20px;">
-          <button id="am-generate-btn" class="btn btn-primary" onclick="generateAgreement()"><i data-lucide="file-signature" style="width:16px;height:16px;vertical-align:middle;"></i> Generate Agreement Document</button>
-          <button class="btn btn-outline" onclick="clearAgreementForm()"><i data-lucide="rotate-ccw" style="width:16px;height:16px;vertical-align:middle;"></i> Clear Form</button>
+          <button id="am-generate-btn" class="btn btn-primary" onclick="generateAgreement()"><i
+              data-lucide="file-signature" style="width:16px;height:16px;vertical-align:middle;"></i> Generate Agreement
+            Document</button>
+          <button class="btn btn-outline" onclick="clearAgreementForm()"><i data-lucide="rotate-ccw"
+              style="width:16px;height:16px;vertical-align:middle;"></i> Clear Form</button>
         </div>
 
-        <div id="am-result-container" style="display:none; margin-top:20px; padding:15px; background:#1e293b; border:1px solid var(--border); border-radius:8px;">
-          <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <strong style="color:#0f5132; flex:1; min-width:250px;"><i data-lucide="check-circle" style="width:18px;height:18px;vertical-align:middle;"></i> Success! Document generated. Please preview below.</strong>
+        <div id="am-result-container"
+          style="display:none; margin-top:20px; padding:15px; background:#1e293b; border:1px solid var(--border); border-radius:8px;">
+          <div
+            style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <strong style="color:#0f5132; flex:1; min-width:250px;"><i data-lucide="check-circle"
+                style="width:18px;height:18px;vertical-align:middle;"></i> Success! Document generated. Please preview
+              below.</strong>
             <div>
-              <a id="am-result-download-pdf" class="btn btn-primary btn-sm" href="#" target="_blank" style="text-decoration:none;"><i data-lucide="download" style="width:14px;height:14px;vertical-align:middle;"></i> Download PDF</a>
+              <a id="am-result-download-pdf" class="btn btn-primary btn-sm" href="#" target="_blank"
+                style="text-decoration:none;"><i data-lucide="download"
+                  style="width:14px;height:14px;vertical-align:middle;"></i> Download PDF</a>
             </div>
           </div>
           <div style="background:#000; padding:10px; border-radius:4px; border:1px solid var(--border);">
             <iframe id="am-preview-frame" style="width:100%; height:600px; border:none;" src=""></iframe>
           </div>
-          <p style="font-size:12px; color:#666; margin-top:10px;"><i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;"></i> If you spot any errors in the preview, simply fix them in the form above and click "Generate Agreement Document" again.</p>
+          <p style="font-size:12px; color:#666; margin-top:10px;"><i data-lucide="info"
+              style="width:14px;height:14px;vertical-align:middle;"></i> If you spot any errors in the preview, simply
+            fix them in the form above and click "Generate Agreement Document" again.</p>
         </div>
       </div>
     </div>
@@ -1372,17 +1421,21 @@
           <div class="section-sub">Manage your daily tasks and progress</div>
         </div>
         <div style="display:flex; gap:10px; align-items:center;">
-          <select id="task-filter-user" class="admin-only" onchange="renderTaskBoard()" style="width:180px; padding:7px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px;">
+          <select id="task-filter-user" class="admin-only" onchange="renderTaskBoard()"
+            style="width:180px; padding:7px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px;">
             <option value="">All Users</option>
           </select>
-          <button class="btn btn-outline" onclick="importMyAssignedCases()"><i data-lucide="download-cloud"></i> Import My Cases</button>
+          <button class="btn btn-outline" onclick="importMyAssignedCases()"><i data-lucide="download-cloud"></i> Import
+            My Cases</button>
           <button class="btn btn-primary" onclick="openNewTaskModal()"><i data-lucide="plus"></i> New Task</button>
         </div>
       </div>
       <div class="task-board" id="task-board-container">
         <div class="task-col" id="col-todo">
           <div class="task-col-header" onclick="toggleTaskCol('todo')">
-            <div class="task-col-title"><div class="col-dot dot-todo"></div>To Do</div>
+            <div class="task-col-title">
+              <div class="col-dot dot-todo"></div>To Do
+            </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="badge" id="count-todo">0</span>
               <i data-lucide="chevron-down" class="mobile-chevron"></i>
@@ -1392,17 +1445,22 @@
         </div>
         <div class="task-col" id="col-inprogress">
           <div class="task-col-header" onclick="toggleTaskCol('inprogress')">
-            <div class="task-col-title"><div class="col-dot dot-inprogress"></div>In Progress</div>
+            <div class="task-col-title">
+              <div class="col-dot dot-inprogress"></div>In Progress
+            </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="badge" id="count-inprogress">0</span>
               <i data-lucide="chevron-down" class="mobile-chevron"></i>
             </div>
           </div>
-          <div class="task-list" id="list-inprogress" ondrop="dropTask(event, 'inprogress')" ondragover="allowDrop(event)"></div>
+          <div class="task-list" id="list-inprogress" ondrop="dropTask(event, 'inprogress')"
+            ondragover="allowDrop(event)"></div>
         </div>
         <div class="task-col" id="col-done">
           <div class="task-col-header" onclick="toggleTaskCol('done')">
-            <div class="task-col-title"><div class="col-dot dot-done"></div>Completed</div>
+            <div class="task-col-title">
+              <div class="col-dot dot-done"></div>Completed
+            </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="badge" id="count-done">0</span>
               <i data-lucide="chevron-down" class="mobile-chevron"></i>
@@ -1447,7 +1505,8 @@
           <div class="section-title">Work Report</div>
           <div class="section-sub">Aggregated productivity metrics</div>
         </div>
-        <button class="btn btn-outline admin-only" onclick="exportWorkReport()"><i data-lucide="download"></i> Export CSV</button>
+        <button class="btn btn-outline admin-only" onclick="exportWorkReport()"><i data-lucide="download"></i> Export
+          CSV</button>
       </div>
       <div class="stats-grid" id="work-report-stats"></div>
       <div class="card">
@@ -1531,8 +1590,10 @@
           <input type="text" id="sod-priority" placeholder="e.g. Case RRR-042, Refund follow-up...">
         </div>
       </div>
-      <div style="margin-top:20px; padding:15px; background:#1e293b; border:1px solid var(--border); border-radius:10px;">
-        <div style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:10px;">📋 My Tasks Today</div>
+      <div
+        style="margin-top:20px; padding:15px; background:#1e293b; border:1px solid var(--border); border-radius:10px;">
+        <div style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:10px;">📋 My
+          Tasks Today</div>
         <div id="sod-task-checklist" style="max-height:150px; overflow-y:auto;"></div>
       </div>
       <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
@@ -1553,14 +1614,16 @@
           <input type="time" id="eod-checkout">
         </div>
         <div class="field" style="display:flex; align-items:center;">
-          <div style="padding:10px; background:rgba(251, 191, 36, 0.1); border:1px solid var(--primary); border-radius:8px; width:100%; font-size:13px; color:var(--primary); text-align:center;">
+          <div
+            style="padding:10px; background:rgba(251, 191, 36, 0.1); border:1px solid var(--primary); border-radius:8px; width:100%; font-size:13px; color:var(--primary); text-align:center;">
             <strong>⏱ Total Work Duration:</strong> <span id="eod-hours-display" style="font-weight:700;">0.0</span> hrs
             <input type="hidden" id="eod-hours" value="0">
           </div>
         </div>
       </div>
       <div style="margin-top:15px; margin-bottom:15px;">
-        <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:8px;">Task Completion Status</label>
+        <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:8px;">Task Completion
+          Status</label>
         <div id="eod-task-checklist" style="max-height:150px; overflow-y:auto;"></div>
       </div>
       <div class="form-grid">
@@ -1649,7 +1712,8 @@
       <button class="close-btn" onclick="closeTaskDrawer()"><i data-lucide="x"></i></button>
     </div>
     <div style="margin-bottom:20px;">
-      <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Status</label>
+      <label
+        style="display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Status</label>
       <div class="status-btns">
         <button class="status-btn s-todo" onclick="updateTaskStatus('todo')">To Do</button>
         <button class="status-btn s-inprogress" onclick="updateTaskStatus('inprogress')">In Progress</button>
@@ -1657,22 +1721,35 @@
       </div>
     </div>
     <div id="dr-task-meta" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
-      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Priority</label><div id="dr-priority" style="font-size:13px; font-weight:600;"></div></div>
-      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Assignee</label><div id="dr-assignee" style="font-size:13px; font-weight:600;"></div></div>
-      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Due Date</label><input type="date" id="dr-due-input" style="width:100%; border:1px solid #e2e8f0; border-radius:4px; font-size:12px; padding:4px;"></div>
-      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Case ID</label><div id="dr-caseid" style="font-size:13px; font-weight:600;"></div></div>
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Priority</label>
+        <div id="dr-priority" style="font-size:13px; font-weight:600;"></div>
+      </div>
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Assignee</label>
+        <div id="dr-assignee" style="font-size:13px; font-weight:600;"></div>
+      </div>
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Due Date</label><input
+          type="date" id="dr-due-input"
+          style="width:100%; border:1px solid #e2e8f0; border-radius:4px; font-size:12px; padding:4px;"></div>
+      <div><label style="display:block; font-size:11px; color:var(--muted); margin-bottom:2px;">Case ID</label>
+        <div id="dr-caseid" style="font-size:13px; font-weight:600;"></div>
+      </div>
     </div>
     <div style="margin-bottom:20px;">
       <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Details</label>
-      <div id="dr-details" style="font-size:13px; line-height:1.6; color:#fff; background:#0f172a; padding:12px; border-radius:8px; border:1px solid var(--border);"></div>
+      <div id="dr-details"
+        style="font-size:13px; line-height:1.6; color:#fff; background:#0f172a; padding:12px; border-radius:8px; border:1px solid var(--border);">
+      </div>
     </div>
     <div style="margin-bottom:20px;">
       <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Notes</label>
-      <textarea id="dr-notes" style="width:100%; min-height:100px; font-size:13px; border-radius:8px; border:1px solid #e2e8f0;" placeholder="Add private notes here..."></textarea>
+      <textarea id="dr-notes"
+        style="width:100%; min-height:100px; font-size:13px; border-radius:8px; border:1px solid #e2e8f0;"
+        placeholder="Add private notes here..."></textarea>
     </div>
     <div style="display:flex; gap:10px;">
       <button class="btn btn-primary" style="flex:1;" onclick="saveTaskDrawer()">Save Changes</button>
-      <button class="btn btn-outline" style="color:#ef4444;" onclick="deleteTask()"><i data-lucide="trash-2"></i></button>
+      <button class="btn btn-outline" style="color:#ef4444;" onclick="deleteTask()"><i
+          data-lucide="trash-2"></i></button>
     </div>
   </div>
 
