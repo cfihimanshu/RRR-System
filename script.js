@@ -1,4 +1,4 @@
-﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  1. LOGIN SECURITY CHECK
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function redirectIfLoggedOut() {
@@ -1217,7 +1217,7 @@ function showCaseDetail(caseId) {
         </div>
         <hr class="divider"/>
         <div style="font-weight:600;margin-bottom:8px">Case Summary</div>
-        <div style="font-size:13px;background:#f8f9fa;padding:10px;border-radius:4px;margin-bottom:16px">${c.caseSummary || "No summary available."}</div>
+        <div style="font-size:13px; background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:12px; border-radius:8px; margin-bottom:16px; color:#fff; line-height:1.5;">${c.caseSummary || "No summary available."}</div>
         ${c.firFileLink ? `<div style="font-weight:600;margin-bottom:8px">Uploaded FIR / Image</div><div style="margin-bottom:16px">${getFilePreviewHTML(c.firFileLink, "FIR Copy")}</div>` : ""}
         ${isAdmin() ? `
           <div style="font-weight:600;margin-bottom:8px">Timeline (${tl.length} entries)</div>
