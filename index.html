@@ -395,7 +395,7 @@
           <div id="ack-container">
             <div style="display:flex; gap:10px; margin-bottom:5px;">
               <input class="ack-input" placeholder="Enter Acknowledgment Number" style="flex:1;">
-              <button type="button" class="btn btn-primary btn-sm" onclick="addAckField()"><i data-lucide="plus"
+              <button type="button" class="btn btn-outline-primary btn-sm" onclick="addAckField()"><i data-lucide="plus"
                   style="width:14px;height:14px;"></i></button>
             </div>
           </div>
@@ -448,9 +448,9 @@
         <hr class="divider" style="margin-bottom:15px;">
         <div id="services-container"></div>
         <div id="add-service-btn-wrap" style="display:none; text-align:center; margin-top:10px;">
-          <button type="button" class="btn btn-outline btn-sm" onclick="addServiceRow()"
-            style="border-color:var(--primary); color:var(--primary);"><i data-lucide="plus-circle"
-              style="width:14px;height:14px;vertical-align:middle;"></i> Add Another Service</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addServiceRow()">
+            <i data-lucide="plus-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Add Another Service
+          </button>
         </div>
       </div>
 
@@ -947,12 +947,12 @@
                 </select>
               </div>
               <div class="field"><label>Direction</label>
-                <select id="cl-dir">
+                <select id="cl-dir" onchange="updateCommDirectionLabel()">
                   <option>Incoming</option>
                   <option>Outgoing</option>
                 </select>
               </div>
-              <div class="field"><label>From / To</label><input id="cl-fromto" placeholder="Person name / number" />
+              <div class="field"><label id="cl-direction-label">From</label><input id="cl-fromto" placeholder="Person name / number" />
               </div>
               <div class="field span2"><label class="required">Summary</label><textarea id="cl-summary"
                   placeholder="What was communicated..."></textarea></div>
@@ -1371,8 +1371,8 @@
             <div id="am-installments-container" style="display:flex; flex-direction:column; gap:8px;">
               <!-- Installment rows will appear here -->
             </div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="addAgreementInstallmentRow()"
-              style="margin-top:12px; border-color:var(--primary); color:var(--primary);">
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addAgreementInstallmentRow()"
+              style="margin-top:12px;">
               <i data-lucide="plus-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Add Installment
               Row
             </button>
@@ -1425,8 +1425,6 @@
             style="width:180px; padding:7px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px;">
             <option value="">All Users</option>
           </select>
-          <button class="btn btn-outline" onclick="importMyAssignedCases()"><i data-lucide="download-cloud"></i> Import
-            My Cases</button>
           <button class="btn btn-primary" onclick="openNewTaskModal()"><i data-lucide="plus"></i> New Task</button>
         </div>
       </div>
@@ -1577,6 +1575,12 @@
           <label>Check-In Time</label>
           <input type="time" id="sod-checkin">
         </div>
+        <div class="field span2">
+          <label>Primary Case for Today</label>
+          <select id="sod-caseid">
+            <option value="">-- No Specific Case --</option>
+          </select>
+        </div>
       </div>
       <div class="form-grid">
         <div class="field span2">
@@ -1608,6 +1612,10 @@
     <div class="modal-box">
       <div class="modal-title">🌙 End of Day — <span style="color:var(--primary);">EOD Report</span></div>
       <div class="modal-desc">Please summarize your work before logging out.</div>
+      
+      <div id="eod-focus-case-container" style="display:none; margin-bottom:15px; padding:10px; background:rgba(74, 222, 128, 0.1); border:1px solid #4ade80; border-radius:8px; font-size:12px; color:#fff;">
+        <strong style="color:#4ade80;">🎯 Today's Focus Case:</strong> <span id="eod-focus-case-id"></span>
+      </div>
       <div class="form-grid">
         <div class="field">
           <label>Check-Out Time</label>
@@ -1684,8 +1692,10 @@
           <input type="date" id="nt-due">
         </div>
         <div class="field">
-          <label>Case ID (Optional)</label>
-          <input type="text" id="nt-caseid" placeholder="e.g. RRR-001">
+          <label>Case ID (Primary)</label>
+          <select id="nt-caseid">
+            <option value="">-- Select Case --</option>
+          </select>
         </div>
       </div>
       <div class="form-grid">

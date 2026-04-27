@@ -1,4 +1,4 @@
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  1. LOGIN SECURITY CHECK
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function redirectIfLoggedOut() {
@@ -242,7 +242,7 @@ function getBrandCode(brandInput) {
   const brand = String(brandInput || "").toLowerCase().trim();
   if (brand === "startupflora") return "SF";
   if (brand === "startupkare") return "SK";
-  
+
   const cleaned = brand.replace(/[^a-z0-9\s]/g, " ");
   const words = cleaned.split(/\s+/).filter(Boolean);
   if (!words.length) return "XX";
@@ -317,10 +317,10 @@ function refreshNavCount() {
   const visibleCases = role === "Admin"
     ? DB.cases
     : DB.cases.filter(c => ((c.assignedTo || c.initiatedBy || "").toLowerCase() === email));
-  
+
   const count = visibleCases ? visibleCases.length : 0;
   const countText = count + " case" + (count !== 1 ? "s" : "");
-  
+
   const el = document.getElementById("navbar-case-count");
   if (el) el.textContent = countText;
   const side = document.getElementById("sidebar-case-count");
@@ -627,7 +627,7 @@ function updateDashboard() {
     : DB.cases.filter(c => ((c.assignedTo || c.initiatedBy || "").toLowerCase() === email));
 
   document.getElementById("stat-total").textContent = visibleCases.length;
-  
+
   const myTasks = DB.tasks.filter(t => (t.assignee || "").toLowerCase() === email && t.status !== 'done');
   const taskStat = document.getElementById("stat-total-tasks");
   if (taskStat) taskStat.textContent = myTasks.length;
@@ -635,15 +635,15 @@ function updateDashboard() {
   // Status Stats based on Action Log dropdown
   const statNew = document.getElementById("stat-new");
   if (statNew) statNew.textContent = visibleCases.filter(c => c.currentStatus === "New").length;
-  
+
   const statOpen = document.getElementById("stat-open");
   if (statOpen) statOpen.textContent = visibleCases.filter(c => c.currentStatus === "Open").length;
-  
+
   document.getElementById("stat-inprogress").textContent = visibleCases.filter(c => c.currentStatus === "In Progress").length;
-  
+
   const statPR = document.getElementById("stat-pendingresp");
   if (statPR) statPR.textContent = visibleCases.filter(c => c.currentStatus === "Pending Response").length;
-  
+
   document.getElementById("stat-settled").textContent = visibleCases.filter(c => c.currentStatus === "Settled").length;
   document.getElementById("stat-closed").textContent = visibleCases.filter(c => c.currentStatus === "Closed").length;
 
@@ -934,7 +934,7 @@ function startCaseEdit(caseId) {
   // Final fix: If MOU Signed is No, Total MOU Value must be 0
   if (c.mouSigned === "No") set("nc-mouval", "0");
 
-  const submitBtn = document.getElementById("nc-submit-btn"); if (submitBtn) submitBtn.textContent = "ðŸ’¾ Update Case";
+  const submitBtn = document.getElementById("nc-submit-btn"); if (submitBtn) submitBtn.textContent = "Update Case";
   const cancelBtn = document.getElementById("nc-cancel-edit-btn"); if (cancelBtn) cancelBtn.style.display = "inline-flex";
 
   const titleEl = document.getElementById("new-case-section-title");
@@ -954,22 +954,28 @@ function startCaseEdit(caseId) {
 function calculateFinancials() {
   const amts = document.querySelectorAll(".s-amt");
   const mouAmts = document.querySelectorAll(".s-mou-amt");
-  
+
   let totalPaid = 0;
   let totalMOU = 0;
-  
+
   amts.forEach(el => totalPaid += (parseFloat(el.value) || 0));
   mouAmts.forEach(el => totalMOU += (parseFloat(el.value) || 0));
-  
+
   const paidField = document.getElementById("nc-amtpaid");
   const mouField = document.getElementById("nc-mouval");
   const disputeField = document.getElementById("nc-dispute");
-  
+
   if (paidField) paidField.value = totalPaid;
   if (mouField) mouField.value = totalMOU;
   if (disputeField) disputeField.value = totalPaid - totalMOU;
-  
+
   updateEngagementNote();
+}
+
+function updateCommDirectionLabel() {
+  const dir = document.getElementById("cl-dir") ? document.getElementById("cl-dir").value : "Incoming";
+  const label = document.getElementById("cl-direction-label");
+  if (label) label.textContent = dir === "Incoming" ? "From" : "To";
 }
 function cancelCaseEdit() { clearNewCaseForm(); }
 
@@ -1064,7 +1070,7 @@ function updateBulkActionVisibility() {
   if (cbs.length > 0) {
     bar.style.display = "block";
     countEl.textContent = `${cbs.length} case${cbs.length > 1 ? "s" : ""} selected`;
-    
+
     // Populate bulk assign dropdown
     const bulkSel = document.getElementById("cm-bulk-assign-email");
     if (bulkSel) {
@@ -1097,7 +1103,7 @@ async function bulkAssignCases() {
       c.lastUpdateDate = nowIST();
       c.updatedAtMs = Date.now();
       addTimelineEntry(id, nowIST(), "ACTION", "Bulk Assigned", `Case bulk assigned to ${email}`);
-      
+
       // Auto Task for Bulk Assignment
       DB.tasks.push({
         taskId: uid("TASK"),
@@ -1170,7 +1176,7 @@ function exportCaseMaster() {
   toast("CSV exported!", "success");
 }
 
-window.deleteCasePermanently = async function(caseId) {
+window.deleteCasePermanently = async function (caseId) {
   if (currentRole() !== "Admin") { toast("Only admin can delete cases.", "error"); return; }
   if (!confirm(`WARNING: Are you sure you want to delete Case ${caseId}?\n\nThis will permanently delete all related:\n- Timeline entries\n- Actions & History\n- Communication logs\n- Documents\n- Tasks\n- Refund requests\n- Audit logs\n\nThis action cannot be undone.`)) return;
 
@@ -1196,7 +1202,7 @@ function showCaseDetail(caseId) {
   const c = DB.cases.find(x => x.caseId === caseId);
   if (!c) { toast("Case not found!", "error"); return; }
   const tl = DB.timeline.filter(t => t.caseId === caseId).sort((a, b) => new Date(b.logTimestamp) - new Date(a.logTimestamp));
-  document.getElementById("modal-case-id-title").textContent = "ðŸ“‹ " + caseId + " â€” " + c.clientName;
+  document.getElementById("modal-case-id-title").textContent = "📋 " + caseId + " — " + c.clientName;
   document.getElementById("modal-body").innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:16px">
           <div><span class="text-muted">Company:</span> <strong>${c.companyName}</strong></div>
@@ -1437,10 +1443,10 @@ function renderActionTable() {
   if (!body) return;
   const role = currentRole();
   const email = currentUserEmail();
-  
+
   // Data Isolation: Filter by assigned cases for Staff
   const myCaseIds = role === "Admin" ? null : DB.cases.filter(c => (c.assignedTo || c.initiatedBy || "").toLowerCase() === email).map(c => c.caseId);
-  
+
   let filtered = DB.actions;
   if (myCaseIds) {
     filtered = DB.actions.filter(a => myCaseIds.includes(a.caseId));
@@ -1483,9 +1489,9 @@ function renderCommTable() {
   if (!body) return;
   const role = currentRole();
   const email = currentUserEmail();
-  
+
   const myCaseIds = role === "Admin" ? null : DB.cases.filter(c => (c.assignedTo || c.initiatedBy || "").toLowerCase() === email).map(c => c.caseId);
-  
+
   let filtered = DB.comms;
   if (myCaseIds) {
     filtered = DB.comms.filter(c => myCaseIds.includes(c.caseId));
@@ -1526,9 +1532,9 @@ function renderDocIndex() {
   if (!body) return;
   const role = currentRole();
   const email = currentUserEmail();
-  
+
   const myCaseIds = role === "Admin" ? null : DB.cases.filter(c => (c.assignedTo || c.initiatedBy || "").toLowerCase() === email).map(c => c.caseId);
-  
+
   let filtered = DB.docs.filter(d => !q || JSON.stringify(d).toLowerCase().includes(q));
   if (myCaseIds) {
     filtered = filtered.filter(d => myCaseIds.includes(d.caseId));
@@ -1747,7 +1753,7 @@ function applyPermissions() {
   const refundCard = document.getElementById("refund-dashboard-card"); if (refundCard) refundCard.style.display = "";
   const refundRequestCard = document.getElementById("refund-request-card"); if (refundRequestCard) refundRequestCard.style.display = canRaiseRefundRequest() ? "" : " none";
   const adminRefundCard = document.getElementById("admin-refund-card"); if (adminRefundCard) adminRefundCard.style.display = role === "Admin" ? "" : " none";
-  
+
   document.querySelectorAll(".admin-only").forEach(el => {
     el.style.display = role === "Admin" ? "" : "none";
   });
@@ -1893,10 +1899,10 @@ async function processRefundStep(reqId, step) {
     ref.lastStatusAtMs = Date.now();
     updateCaseMasterField(ref.caseId, "currentStatus", "Refund Processed");
     addTimelineEntry(ref.caseId, ref.approvedAt, "ACTION", "Refund Approved", `Approved by ${user || "Approver"}`);
-    
+
     // Final Approval Notification
     sendNotification(ADMIN_EMAIL, "✅ Refund Final Approval Processed", `Hello Admin,\n\nA refund request has been given FINAL APPROVAL.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nApproved By: ${user}\n\nThe request has been moved to the Accountant for payout.`);
-    
+
     toast("Refund approved successfully.", "success");
   } else if (step === "reject") {
     const remark = prompt("Enter rejection remark:");
@@ -1905,10 +1911,10 @@ async function processRefundStep(reqId, step) {
     ref.lastStatusAtMs = Date.now();
     updateCaseMasterField(ref.caseId, "currentStatus", "Refund Rejected by Admin");
     addTimelineEntry(ref.caseId, nowIST(), "ACTION", "Refund Rejected", `Rejected by Admin: ${remark}`);
-    
+
     // Admin Rejection Notification
     sendNotification(ADMIN_EMAIL, "âŒ Refund Request Rejected by Admin", `Hello Admin,\n\nA refund request has been REJECTED in the final stage.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nRejected By: ${user}\nRemark: ${remark}`);
-    
+
     toast("Refund rejected and requester notified.", "info");
   }
 
@@ -1920,7 +1926,7 @@ function renderRefundDashboard() {
   normalizeDBShape();
   const email = currentUserEmail(), role = currentRole();
   const myCaseIds = role === "Admin" || role === "Reviewer" || role === "Accountant" ? null : DB.cases.filter(c => (c.assignedTo || c.initiatedBy || "").toLowerCase() === email).map(c => c.caseId);
-  
+
   let rows = DB.refunds.slice();
   if (myCaseIds) {
     rows = rows.filter(r => myCaseIds.includes(r.caseId));
@@ -2308,10 +2314,10 @@ async function handleReview(reqId, action) {
     ref.lastStatusAtMs = Date.now();
     updateCaseMasterField(ref.caseId, "currentStatus", "Reviewed - Pending Approval");
     addTimelineEntry(ref.caseId, nowIST(), "ACTION", "Refund Reviewed", `Reviewed by ${user}`);
-    
+
     // Reviewer Approval Notification
     sendNotification(ADMIN_EMAIL, "ðŸ” Refund Request Reviewed (Approved)", `Hello Admin,\n\nA refund request has been REVIEWED and PASSED by the Reviewer.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nReviewed By: ${user}\n\nThis is now waiting for your Final Approval in the Approver Queue.`);
-    
+
     toast("Reviewed and moved to approver queue.", "success");
   } else {
     const remark = prompt("Enter remark/reason for sending back:");
@@ -2320,10 +2326,10 @@ async function handleReview(reqId, action) {
     ref.reviewerRemark = remark;
     ref.lastStatusAtMs = Date.now();
     addTimelineEntry(ref.caseId, nowIST(), "ACTION", "Refund Rejected", `Rejected by reviewer: ${remark}`);
-    
+
     // Reviewer Rejection Notification
     sendNotification(ADMIN_EMAIL, "âŒ Refund Request Rejected by Reviewer", `Hello Admin,\n\nA refund request has been REJECTED by the Reviewer.\n\nCase ID: ${ref.caseId}\nAmount: ₹${ref.amount}\nRejected By: ${user}\nRemark: ${remark}\n\nThe request has been sent back to the staff.`);
-    
+
     toast("Rejected and returned to requester with remark.", "info");
   }
 
@@ -2394,7 +2400,7 @@ function closeAccPaymentModal() {
 async function submitAccountantPayment() {
   const utr = document.getElementById("ap-utr").value.trim();
   const proof = document.getElementById("ap-file-data").value;
-  
+
   if (!utr) { toast("Please enter UTR/Transaction ID", "error"); return; }
   if (!proof) { toast("Please upload payment screenshot proof", "error"); return; }
 
@@ -2427,7 +2433,7 @@ async function markAsPaid(reqId) {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 //  AGREEMENT MODULE
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-window.addAgreementInstallmentRow = function() {
+window.addAgreementInstallmentRow = function () {
   const container = document.getElementById("am-installments-container");
   const rowCount = container.children.length;
   if (rowCount >= 10) { toast("Maximum 10 installments allowed", "info"); return; }
@@ -2445,7 +2451,7 @@ window.addAgreementInstallmentRow = function() {
   if (window.lucide) lucide.createIcons();
 };
 
-window.renumberInstallments = function() {
+window.renumberInstallments = function () {
   const container = document.getElementById("am-installments-container");
   Array.from(container.children).forEach((row, idx) => {
     row.children[0].textContent = `#${idx + 1}`;
@@ -2461,9 +2467,9 @@ function clearAgreementForm() {
 async function generateAgreement() {
   const btn = document.getElementById("am-generate-btn");
   const origText = btn.innerHTML;
-  
+
   const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
-  
+
   const templateId = get("am-template-id");
   const date = get("am-date");
   const company = get("am-company");
@@ -2493,7 +2499,7 @@ async function generateAgreement() {
       installmentsArr.push(`Installment ${idx + 1}: ₹${Number(amt).toLocaleString('en-IN')}/- payable on ${dStr}.`);
     }
   });
-  
+
   const installmentsText = installmentsArr.length > 0 ? installmentsArr.join("\n") : "N/A";
 
   const payload = {
@@ -2532,7 +2538,7 @@ async function generateAgreement() {
       method: "POST",
       body: JSON.stringify(fullPayload)
     });
-    
+
     const rawText = await res.text();
     let data;
     try {
@@ -2542,20 +2548,20 @@ async function generateAgreement() {
       toast(rawText.substring(0, 100), "error"); // Show the actual backend error
       throw new Error(rawText);
     }
-    
+
     if (data.status === "success") {
       document.getElementById("am-result-container").style.display = "block";
-      
+
       // We expect the backend to return data.docId for the newly created document
       // If not, we fallback to the templateId (old behavior)
       const targetDocId = data.docId || templateId;
-      
+
       const previewUrl = `https://docs.google.com/document/d/${targetDocId}/preview?t=${Date.now()}`;
       const pdfUrl = `https://docs.google.com/document/d/${targetDocId}/export?format=pdf`;
-      
+
       document.getElementById("am-preview-frame").src = previewUrl;
       document.getElementById("am-result-download-pdf").href = pdfUrl;
-      
+
       toast("Agreement generated successfully! Preview it below.", "success");
     } else {
       toast("Error generating agreement.", "error");
@@ -2616,7 +2622,7 @@ window.addEventListener("resize", () => {
 //  TASK MANAGEMENT & SOD/EOD LOGIC
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-window.checkSODOnLogin = function() {
+window.checkSODOnLogin = function () {
   const email = currentUserEmail();
   const today = todayDate();
   // Double check if already filed in DB
@@ -2628,10 +2634,10 @@ window.checkSODOnLogin = function() {
   openSODModal();
 };
 
-window.openSODModal = function() {
+window.openSODModal = function () {
   const email = currentUserEmail();
   const date = todayDate();
-  
+
   if (currentRole() !== "Admin") {
     const alreadyFilledSOD = DB.sod.find(s => (s.user || "").toLowerCase() === email && s.date === date);
     if (alreadyFilledSOD) {
@@ -2646,7 +2652,16 @@ window.openSODModal = function() {
   document.getElementById("sod-name").value = currentUserEmail();
   document.getElementById("sodDateLabel").textContent = "Date: " + todayDate();
   document.getElementById("sod-checkin").value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-  
+
+  const caseSelect = document.getElementById("sod-caseid");
+  if (caseSelect) {
+    const role = currentRole();
+    const email = currentUserEmail();
+    const filteredCases = DB.cases.filter(c => role === "Admin" || (c.assignedTo || c.initiatedBy || "").toLowerCase() === email);
+    caseSelect.innerHTML = '<option value="">-- No Specific Case --</option>' +
+      filteredCases.map(c => `<option value="${c.caseId}">${c.caseId} - ${c.clientName}</option>`).join("");
+  }
+
   // Render tasks for today
   const myTasks = DB.tasks.filter(t => t.assignee === email && t.status !== 'done');
   const list = document.getElementById("sod-task-checklist");
@@ -2657,15 +2672,15 @@ window.openSODModal = function() {
       <span class="tag tag-${t.priority.toLowerCase()}">${t.priority}</span>
     </div>
   `).join("") : '<div style="color:var(--muted); font-size:12px;">No tasks assigned yet.</div>';
-  
+
   if (window.lucide) lucide.createIcons();
 };
 
-window.closeSODModal = function() {
+window.closeSODModal = function () {
   document.getElementById("sodModal").classList.add("hidden");
 };
 
-window.submitSOD = async function() {
+window.submitSOD = async function () {
   const row = {
     sodId: uid("SOD"),
     date: todayDate(),
@@ -2673,6 +2688,7 @@ window.submitSOD = async function() {
     time: document.getElementById("sod-checkin").value,
     planned: document.getElementById("sod-planned").value,
     priority: document.getElementById("sod-priority").value,
+    caseId: document.getElementById("sod-caseid").value,
     timestamp: nowIST()
   };
   DB.sod.push(row);
@@ -2682,17 +2698,17 @@ window.submitSOD = async function() {
   renderReportsLog();
 };
 
-window.openEODModal = function() {
+window.openEODModal = function () {
   const email = currentUserEmail();
   const today = todayDate();
-  
+
   if (currentRole() !== "Admin") {
     const sodRecord = DB.sod.find(r => (r.user || "").toLowerCase() === email && r.date === today);
     if (!sodRecord) {
       toast("Please fill SOD first before filing EOD.", "error");
       return;
     }
-    
+
     const alreadyFilledEOD = DB.eod.find(e => (e.user || "").toLowerCase() === email && e.date === today);
     if (alreadyFilledEOD) {
       toast("You have already filled EOD for today.", "warning");
@@ -2704,7 +2720,7 @@ window.openEODModal = function() {
   modal.classList.remove("hidden");
   const checkoutTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   document.getElementById("eod-checkout").value = checkoutTime;
-  
+
   // Auto-calculate working hours
   const sodRecord = DB.sod.find(r => (r.user || "").toLowerCase() === email && r.date === today);
   if (sodRecord && sodRecord.time) {
@@ -2716,9 +2732,18 @@ window.openEODModal = function() {
       const hours = (diffMin / 60).toFixed(1);
       document.getElementById("eod-hours").value = hours;
       document.getElementById("eod-hours-display").textContent = hours;
-    } catch(e) { console.error("Hours calc error", e); }
+    } catch (e) { console.error("Hours calc error", e); }
   }
-  
+
+  const focusContainer = document.getElementById("eod-focus-case-container");
+  const focusId = document.getElementById("eod-focus-case-id");
+  if (sodRecord && sodRecord.caseId && focusContainer && focusId) {
+    focusContainer.style.display = "block";
+    focusId.textContent = sodRecord.caseId;
+  } else if (focusContainer) {
+    focusContainer.style.display = "none";
+  }
+
   const myTasks = DB.tasks.filter(t => t.assignee === email && (t.status !== 'done' || t.updatedAtDate === today));
   const list = document.getElementById("eod-task-checklist");
   list.innerHTML = myTasks.length ? myTasks.map(t => `
@@ -2729,7 +2754,7 @@ window.openEODModal = function() {
   `).join("") : 'No active tasks found.';
 };
 
-window.toggleTaskFromEOD = function(taskId, isDone) {
+window.toggleTaskFromEOD = function (taskId, isDone) {
   const t = DB.tasks.find(x => x.taskId === taskId);
   if (t) {
     t.status = isDone ? 'done' : 'inprogress';
@@ -2739,11 +2764,11 @@ window.toggleTaskFromEOD = function(taskId, isDone) {
   }
 };
 
-window.closeEODModal = function() {
+window.closeEODModal = function () {
   document.getElementById("eodModal").classList.add("hidden");
 };
 
-window.submitEOD = async function() {
+window.submitEOD = async function () {
   const row = {
     eodId: uid("EOD"),
     date: todayDate(),
@@ -2762,11 +2787,11 @@ window.submitEOD = async function() {
   logout();
 };
 
-window.renderTaskBoard = function() {
+window.renderTaskBoard = function () {
   const role = currentRole();
   const email = currentUserEmail();
   const filterUser = document.getElementById("task-filter-user") ? document.getElementById("task-filter-user").value : "";
-  
+
   let filtered = DB.tasks;
   if (role === 'Admin') {
     if (filterUser) {
@@ -2775,10 +2800,10 @@ window.renderTaskBoard = function() {
   } else {
     filtered = DB.tasks.filter(t => (t.assignee || "").toLowerCase() === email.toLowerCase());
   }
-  
+
   const cols = { todo: [], inprogress: [], done: [] };
   filtered.forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
-  
+
   Object.keys(cols).forEach(status => {
     const list = document.getElementById("list-" + status);
     const count = document.getElementById("count-" + status);
@@ -2799,9 +2824,9 @@ window.renderTaskBoard = function() {
   if (window.lucide) lucide.createIcons();
 };
 
-window.allowDrop = function(ev) { ev.preventDefault(); };
-window.dragTask = function(ev, taskId) { ev.dataTransfer.setData("taskId", taskId); };
-window.dropTask = async function(ev, newStatus) {
+window.allowDrop = function (ev) { ev.preventDefault(); };
+window.dragTask = function (ev, taskId) { ev.dataTransfer.setData("taskId", taskId); };
+window.dropTask = async function (ev, newStatus) {
   ev.preventDefault();
   const taskId = ev.dataTransfer.getData("taskId");
   const t = DB.tasks.find(x => x.taskId === taskId);
@@ -2814,64 +2839,50 @@ window.dropTask = async function(ev, newStatus) {
   }
 };
 
-window.importMyAssignedCases = async function() {
+
+window.openNewTaskModal = function () {
+  const modal = document.getElementById("newTaskModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+
   const email = currentUserEmail();
-  if (!email) { toast("Please login first", "error"); return; }
-  
-  const myCases = DB.cases.filter(c => (c.assignedTo || "").toLowerCase() === email.toLowerCase());
-  
-  let addedCount = 0;
-  myCases.forEach(c => {
-    // Check if task already exists for this case for THIS user
-    const exists = DB.tasks.some(t => t.caseId === c.caseId && t.assignee.toLowerCase() === email.toLowerCase());
-    if (!exists) {
-      DB.tasks.push({
-        taskId: uid("TASK"),
-        title: `[${c.caseId}] ${c.caseTitle || c.companyName}`,
-        priority: c.priority || 'Medium',
-        assignee: email,
-        caseId: c.caseId,
-        details: c.caseSummary || 'Imported from assigned cases.',
-        status: 'todo',
-        createdAt: nowIST(),
-        updatedAtMs: Date.now()
-      });
-      addedCount++;
+  const role = currentRole();
+  const caseSelect = document.getElementById("nt-caseid");
+  if (caseSelect) {
+    const filteredCases = DB.cases.filter(c => role === "Admin" || (c.assignedTo || c.initiatedBy || "").toLowerCase() === email);
+    caseSelect.innerHTML = '<option value="">-- Select Case --</option>' +
+      filteredCases.map(c => `<option value="${c.caseId}">${c.caseId} - ${c.clientName}</option>`).join("");
+
+    // Auto-select from SOD if available
+    const today = todayDate();
+    const sod = DB.sod.find(s => (s.user || "").toLowerCase() === email && s.date === today);
+    if (sod && sod.caseId) {
+      caseSelect.value = sod.caseId;
     }
-  });
-  
-  if (addedCount > 0) {
-    toast(`Imported ${addedCount} cases as tasks!`, "success");
-    renderTaskBoard();
-    await saveDB();
-  } else {
-    toast("All your assigned cases are already in your tasks.", "info");
+  }
+
+  const assigneeSelect = document.getElementById("nt-assignee");
+  if (assigneeSelect) {
+    const users = getUsersList();
+    assigneeSelect.innerHTML = users.map(u => `<option value="${u}" ${u === email ? 'selected' : ''}>${u}</option>`).join("");
   }
 };
 
-window.openNewTaskModal = function() {
-  const modal = document.getElementById("newTaskModal");
-  modal.classList.remove("hidden");
-  
-  const assigneeSel = document.getElementById("nt-assignee");
-  assigneeSel.innerHTML = '<option value="">-- Select --</option>';
-  const users = getUsersList();
-  users.forEach(u => {
-    const opt = document.createElement("option");
-    opt.value = u; opt.textContent = u;
-    assigneeSel.appendChild(opt);
-  });
-  document.getElementById("nt-assignee").value = currentUserEmail();
-};
+window.closeNewTaskModal = function () { document.getElementById("newTaskModal").classList.add("hidden"); };
 
-window.closeNewTaskModal = function() { document.getElementById("newTaskModal").classList.add("hidden"); };
+function generateTaskId(caseId) {
+  if (!caseId) return uid("TASK");
+  const sameCaseTasks = DB.tasks.filter(t => t.caseId === caseId);
+  const nextSr = sameCaseTasks.length + 1;
+  return `TASK-${caseId}-${nextSr}`;
+}
 
-window.createManualTask = async function() {
+window.createManualTask = async function () {
   const get = id => document.getElementById(id).value.trim();
   if (!get("nt-title")) { toast("Title required", "error"); return; }
-  
+
   const row = {
-    taskId: uid("TASK"),
+    taskId: generateTaskId(get("nt-caseid")),
     title: get("nt-title"),
     priority: get("nt-priority"),
     assignee: get("nt-assignee") || currentUserEmail(),
@@ -2890,13 +2901,13 @@ window.createManualTask = async function() {
 };
 
 let currentEditingTaskId = null;
-window.openTaskDrawer = function(taskId) {
+window.openTaskDrawer = function (taskId) {
   const t = DB.tasks.find(x => x.taskId === taskId);
   if (!t) return;
   currentEditingTaskId = taskId;
   document.getElementById("taskDrawerOverlay").classList.remove("hidden");
   document.getElementById("taskDrawer").classList.add("open");
-  
+
   document.getElementById("dr-task-id").textContent = t.taskId;
   document.getElementById("dr-task-title").textContent = t.title;
   document.getElementById("dr-priority").textContent = t.priority;
@@ -2905,17 +2916,17 @@ window.openTaskDrawer = function(taskId) {
   document.getElementById("dr-caseid").textContent = t.caseId || "-";
   document.getElementById("dr-details").textContent = t.details || "No details provided.";
   document.getElementById("dr-notes").value = t.notes || "";
-  
+
   document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("selected"));
   document.querySelector(`.status-btn.s-${t.status}`)?.classList.add("selected");
 };
 
-window.closeTaskDrawer = function() {
+window.closeTaskDrawer = function () {
   document.getElementById("taskDrawerOverlay").classList.add("hidden");
   document.getElementById("taskDrawer").classList.remove("open");
 };
 
-window.updateTaskStatus = function(status) {
+window.updateTaskStatus = function (status) {
   const t = DB.tasks.find(x => x.taskId === currentEditingTaskId);
   if (t) {
     t.status = status;
@@ -2924,7 +2935,7 @@ window.updateTaskStatus = function(status) {
   }
 };
 
-window.saveTaskDrawer = async function() {
+window.saveTaskDrawer = async function () {
   const t = DB.tasks.find(x => x.taskId === currentEditingTaskId);
   if (t) {
     t.notes = document.getElementById("dr-notes").value;
@@ -2937,7 +2948,7 @@ window.saveTaskDrawer = async function() {
   }
 };
 
-window.deleteTask = async function() {
+window.deleteTask = async function () {
   if (confirm("Delete this task?")) {
     DB.tasks = DB.tasks.filter(x => x.taskId !== currentEditingTaskId);
     renderTaskBoard();
@@ -2946,7 +2957,7 @@ window.deleteTask = async function() {
   }
 };
 
-window.renderReportsLog = function() {
+window.renderReportsLog = function () {
   const body = document.getElementById("reports-body");
   if (!body) return;
   const email = currentUserEmail();
@@ -2958,8 +2969,8 @@ window.renderReportsLog = function() {
   const all = [
     ...filteredSod.map(r => ({ ...r, type: 'SOD' })),
     ...filteredEod.map(r => ({ ...r, type: 'EOD' }))
-  ].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-  
+  ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
   body.innerHTML = all.map(r => `
     <tr>
       <td>${r.date}</td>
@@ -2972,13 +2983,13 @@ window.renderReportsLog = function() {
   `).join("");
 };
 
-window.viewReportDetail = function(type, id) {
+window.viewReportDetail = function (type, id) {
   const r = type === 'SOD' ? DB.sod.find(x => x.sodId === id) : DB.eod.find(x => x.eodId === id);
   if (!r) return;
   alert(`${type} Report Details:\n\nUser: ${r.user}\nDate: ${r.date}\nTime: ${r.time}\n\nContent:\n${r.planned || r.summary}`);
 };
 
-window.renderWorkReport = function() {
+window.renderWorkReport = function () {
   const stats = document.getElementById("work-report-stats");
   if (!stats) return;
 
@@ -2991,17 +3002,17 @@ window.renderWorkReport = function() {
 
   const totalTasks = userTasks.length;
   const doneTasks = userTasks.filter(t => t.status === 'done').length;
-  
+
   stats.innerHTML = `
     <div class="stat-card"><div class="stat-value">${totalTasks}</div><div class="stat-label">Total Tasks</div></div>
     <div class="stat-card"><div class="stat-value">${doneTasks}</div><div class="stat-label">Completed</div></div>
     <div class="stat-card"><div class="stat-value">${userSod.length}</div><div class="stat-label">SODs Filed</div></div>
     <div class="stat-card"><div class="stat-value">${userEod.length}</div><div class="stat-label">EODs Filed</div></div>
   `;
-  
+
   const body = document.getElementById("work-log-body");
   const days = [...new Set([...userSod, ...userEod].map(r => r.date))].sort().reverse();
-  
+
   body.innerHTML = days.map(d => {
     const sods = userSod.filter(x => x.date === d);
     return sods.map(s => {
@@ -3021,4 +3032,4 @@ window.renderWorkReport = function() {
     }).join("");
   }).join("");
 };
-window.toggleTaskCol = function(colId) { const col = document.getElementById("col-" + colId); if (col) col.classList.toggle("open"); };
+window.toggleTaskCol = function (colId) { const col = document.getElementById("col-" + colId); if (col) col.classList.toggle("open"); };
